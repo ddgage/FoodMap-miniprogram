@@ -1,2 +1,190 @@
-.page-container { display: flex; align-items: center; justify-content: center; height: 100vh; }
-.placeholder { color: #999; font-size: 28rpx; }
+/* pages/mine/index.wxss */
+.page-container {
+  min-height: 100vh;
+  background: #f6f6f6;
+  padding-bottom: 40rpx;
+}
+
+/* 用户头部 */
+.user-header {
+  background: #fff;
+  overflow: hidden;
+}
+
+.user-bg {
+  height: 140rpx;
+  background: linear-gradient(135deg, #07C160, #06AD56);
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  padding: 0 32rpx 32rpx;
+  margin-top: -40rpx;
+  gap: 20rpx;
+}
+
+.user-avatar {
+  width: 120rpx;
+  height: 120rpx;
+  border-radius: 50%;
+  border: 4rpx solid #fff;
+  background: #f0f0f0;
+  box-shadow: 0 4rpx 12rpx rgba(0,0,0,0.08);
+  flex-shrink: 0;
+}
+
+.user-detail {
+  flex: 1;
+  min-width: 0;
+  margin-top: 40rpx;
+}
+
+.user-nickname {
+  font-size: 34rpx;
+  font-weight: 700;
+  color: #333;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.user-desc {
+  font-size: 24rpx;
+  color: #999;
+  margin-top: 4rpx;
+}
+
+.edit-btn {
+  margin-top: 40rpx;
+  padding: 12rpx 24rpx;
+  border: 1rpx solid #07C160;
+  border-radius: 32rpx;
+  flex-shrink: 0;
+}
+
+.edit-btn text {
+  font-size: 24rpx;
+  color: #07C160;
+}
+
+/* 统计数据 */
+.stats-row {
+  display: flex;
+  background: #fff;
+  margin: 16rpx 0;
+  padding: 32rpx 0;
+  align-items: center;
+}
+
+.stat-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8rpx;
+}
+
+.stat-num {
+  font-size: 40rpx;
+  font-weight: 700;
+  color: #333;
+}
+
+.stat-label {
+  font-size: 24rpx;
+  color: #999;
+}
+
+.stat-divider {
+  width: 1rpx;
+  height: 60rpx;
+  background: #eee;
+}
+
+/* 功能菜单 */
+.menu-list {
+  background: #fff;
+  margin-bottom: 16rpx;
+}
+
+.menu-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 32rpx;
+  border-bottom: 1rpx solid #f5f5f5;
+}
+
+.menu-item:last-child {
+  border-bottom: none;
+}
+
+.menu-left {
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+}
+
+.menu-icon {
+  font-size: 36rpx;
+}
+
+.menu-text {
+  font-size: 30rpx;
+  color: #333;
+}
+
+.menu-arrow {
+  font-size: 36rpx;
+  color: #ccc;
+  font-weight: 300;
+}
+
+/* 登录按钮 */
+.login-area {
+  display: flex;
+  justify-content: center;
+  padding: 60rpx 32rpx;
+}
+
+.btn-login {
+  width: 80%;
+  height: 88rpx;
+  background: linear-gradient(135deg, #07C160, #06AD56);
+  color: #fff;
+  font-size: 32rpx;
+  font-weight: 500;
+  border-radius: 44rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+}
+
+/* Loading */
+.loading-mask {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255,255,255,0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+}
+
+.loading-spinner {
+  width: 60rpx;
+  height: 60rpx;
+  border: 4rpx solid #eee;
+  border-top-color: #07C160;
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}

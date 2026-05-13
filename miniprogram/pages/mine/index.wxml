@@ -1,4 +1,73 @@
 <!--pages/mine/index.wxml-->
 <view class="page-container">
-  <view class="placeholder">我的页面开发中...</view>
+  <!-- 用户信息区 -->
+  <view class="user-header">
+    <view class="user-bg"></view>
+    <view class="user-info">
+      <image class="user-avatar" src="{{userInfo.avatar_url || '/images/icons/avatar.png'}}" mode="aspectFill" bindtap="onEditProfile"></image>
+      <view class="user-detail">
+        <view class="user-nickname">{{userInfo.nickname || '点击登录'}}</view>
+        <view class="user-desc" wx:if="{{userInfo._id}}">美食探索者</view>
+        <view class="user-desc" wx:else>登录享受更多功能</view>
+      </view>
+      <view class="edit-btn" bindtap="onEditProfile" wx:if="{{userInfo._id}}">
+        <text>编辑资料</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 统计数据 -->
+  <view class="stats-row" wx:if="{{userInfo._id}}">
+    <view class="stat-item" bindtap="onGoFavorites">
+      <view class="stat-num">{{favCount}}</view>
+      <view class="stat-label">收藏</view>
+    </view>
+    <view class="stat-divider"></view>
+    <view class="stat-item" bindtap="onGoHistory">
+      <view class="stat-num">{{historyCount}}</view>
+      <view class="stat-label">浏览记录</view>
+    </view>
+  </view>
+
+  <!-- 功能列表 -->
+  <view class="menu-list">
+    <view class="menu-item" bindtap="onGoFavorites">
+      <view class="menu-left">
+        <text class="menu-icon">❤️</text>
+        <text class="menu-text">我的收藏</text>
+      </view>
+      <text class="menu-arrow">›</text>
+    </view>
+    <view class="menu-item" bindtap="onGoHistory">
+      <view class="menu-left">
+        <text class="menu-icon">🕐</text>
+        <text class="menu-text">浏览记录</text>
+      </view>
+      <text class="menu-arrow">›</text>
+    </view>
+    <view class="menu-item" bindtap="onEditProfile">
+      <view class="menu-left">
+        <text class="menu-icon">⚙️</text>
+        <text class="menu-text">设置</text>
+      </view>
+      <text class="menu-arrow">›</text>
+    </view>
+    <view class="menu-item" bindtap="onAbout">
+      <view class="menu-left">
+        <text class="menu-icon">ℹ️</text>
+        <text class="menu-text">关于美食地图</text>
+      </view>
+      <text class="menu-arrow">›</text>
+    </view>
+  </view>
+
+  <!-- 登录按钮（未登录时） -->
+  <view class="login-area" wx:if="{{!userInfo._id && !loading}}">
+    <button class="btn-login" bindtap="onLogin">微信一键登录</button>
+  </view>
+
+  <!-- Loading -->
+  <view class="loading-mask" wx:if="{{loading}}">
+    <view class="loading-spinner"></view>
+  </view>
 </view>
