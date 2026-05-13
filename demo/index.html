@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>美食地图 - Demo</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Helvetica Neue",sans-serif;background:#f6f6f6;max-width:414px;margin:0 auto;min-height:100vh;position:relative;overflow-x:hidden}
+body::before{content:'';position:fixed;top:0;left:50%;transform:translateX(-50%);width:414px;height:100%;border-left:1px solid #e0e0e0;border-right:1px solid #e0e0e0;pointer-events:none;z-index:9999}
+
+.tabbar{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:414px;max-width:100vw;height:50px;background:#fff;display:flex;border-top:1px solid #eee;z-index:1000}
+.tab-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:10px;color:#999;cursor:pointer;transition:color .2s}
+.tab-item.active{color:#07C160}
+.tab-item .tab-icon{font-size:20px;margin-bottom:1px}
+
+.page{display:none;padding-bottom:60px;min-height:100vh}
+.page.active{display:block}
+
+/* ===== Map Page ===== */
+.top-bar{background:#fff;padding:10px 16px;display:flex;align-items:center;gap:10px;z-index:10;position:sticky;top:0}
+.city-picker{font-size:16px;font-weight:700;white-space:nowrap;cursor:pointer;display:flex;align-items:center;gap:2px}
+.city-picker:hover{opacity:.7}
+.city-arrow{font-size:10px;color:#999;transition:transform .2s}
+.search-box{flex:1;height:34px;background:#f5f5f5;border-radius:17px;display:flex;align-items:center;padding:0 12px;gap:6px;cursor:pointer}
+.search-box span{font-size:13px;color:#999}
+.category-scroll{display:flex;gap:8px;padding:10px 16px;background:#fff;overflow-x:auto;border-bottom:1px solid #eee;-webkit-overflow-scrolling:touch}
+.cat-chip{padding:5px 14px;border-radius:14px;font-size:12px;white-space:nowrap;background:#f5f5f5;color:#666;cursor:pointer;transition:all .2s;flex-shrink:0}
+.cat-chip.active{background:#07C160;color:#fff}
+.map-wrap{height:320px;background:#e8f4fd;position:relative;display:flex;align-items:center;justify-content:center;margin:8px 16px;border-radius:12px;overflow:hidden}
+.map-placeholder{text-align:center}
+.map-placeholder .pin{font-size:40px}
+.map-placeholder .hint{font-size:12px;color:#07C160;margin-top:4px}
+.locate-btn{position:absolute;right:12px;bottom:12px;width:40px;height:40px;background:#fff;border-radius:50%;box-shadow:0 2px 8px rgba(0,0,0,.12);display:flex;align-items:center;justify-content:center;font-size:18px;cursor:pointer}
+.card-scroll{padding:8px 16px 16px;display:flex;gap:12px;overflow-x:auto;-webkit-overflow-scrolling:touch}
+.shop-card{min-width:240px;display:flex;gap:10px;padding:10px;background:#fff;border:2px solid #eee;border-radius:12px;cursor:pointer;transition:all .2s;flex-shrink:0}
+.shop-card.active{border-color:#07C160;background:#f0fff4}
+.shop-card .thumb{width:72px;height:72px;border-radius:8px;background:#f0f0f0;display:flex;align-items:center;justify-content:center;font-size:30px;flex-shrink:0}
+.shop-card .info{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center}
+.shop-card .name{font-size:14px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.shop-card .meta{font-size:11px;color:#999;margin-top:3px}
+.shop-card .dist{font-size:11px;color:#07C160;margin-top:2px}
+.shop-card .rating{position:absolute;bottom:2px;right:2px;background:rgba(0,0,0,.5);color:#fff;font-size:10px;padding:1px 6px;border-radius:4px}
+
+/* ===== Explore Page ===== */
+.search-bar{padding:10px 16px;background:#fff}
+.filter-bar{display:flex;gap:24px;padding:0 16px 10px;background:#fff;font-size:14px}
+.filter-bar span{color:#666;cursor:pointer;padding-bottom:4px;border-bottom:2px solid transparent}
+.filter-bar span.active{color:#07C160;font-weight:600;border-bottom-color:#07C160}
+.waterfall{display:flex;gap:10px;padding:10px 12px}
+.waterfall-col{flex:1;display:flex;flex-direction:column;gap:10px}
+.post-card{background:#fff;border-radius:10px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.04);cursor:pointer;transition:transform .15s}
+.post-card:active{transform:scale(.97)}
+.post-cover-wrap{position:relative;background:#f0f0f0;overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:48px}
+.play-overlay{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:44px;height:44px;background:rgba(0,0,0,.45);border-radius:50%;display:flex;align-items:center;justify-content:center}
+.play-overlay::after{content:'';width:0;height:0;border-top:10px solid transparent;border-bottom:10px solid transparent;border-left:16px solid #fff;margin-left:3px}
+.post-title{padding:8px 10px 4px;font-size:12px;font-weight:500;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;line-height:1.4}
+.post-meta{padding:0 10px 10px;font-size:10px;color:#999;display:flex;justify-content:space-between}
+
+/* ===== Mine Page ===== */
+.user-header{background:#fff;overflow:hidden}
+.user-bg{height:80px;background:linear-gradient(135deg,#07C160,#06AD56)}
+.user-row{display:flex;align-items:center;padding:0 16px 16px;margin-top:-30px;gap:12px}
+.user-avatar{width:70px;height:70px;border-radius:50%;border:3px solid #fff;background:#f0f0f0;box-shadow:0 2px 8px rgba(0,0,0,.08);display:flex;align-items:center;justify-content:center;font-size:32px;flex-shrink:0;cursor:pointer}
+.user-name{font-size:18px;font-weight:700;margin-top:30px}
+.user-desc{font-size:12px;color:#999}
+.edit-tag{padding:5px 12px;border:1px solid #07C160;border-radius:14px;font-size:12px;color:#07C160;margin-top:30px;margin-left:auto;cursor:pointer}
+.stats-row{display:flex;background:#fff;margin:10px 0;padding:20px 0}
+.stat-item{flex:1;text-align:center;cursor:pointer}
+.stat-num{font-size:24px;font-weight:700}
+.stat-label{font-size:12px;color:#999;margin-top:4px}
+.stat-divider{width:1px;height:36px;background:#eee;align-self:center}
+.menu-list{background:#fff;margin-bottom:10px}
+.menu-item{display:flex;justify-content:space-between;padding:16px;border-bottom:1px solid #f5f5f5;cursor:pointer;font-size:15px}
+.menu-item:last-child{border-bottom:none}
+.menu-arrow{color:#ccc;font-size:18px}
+.btn-login{display:block;width:80%;margin:40px auto;height:46px;background:linear-gradient(135deg,#07C160,#06AD56);color:#fff;font-size:16px;border:none;border-radius:23px;cursor:pointer}
+.login-area{text-align:center;padding:20px}
+
+/* ===== Detail Pages ===== */
+.detail-page{position:fixed;top:0;left:50%;transform:translateX(-50%);width:414px;max-width:100vw;height:100vh;background:#f6f6f6;z-index:1500;display:none;flex-direction:column;overflow-y:auto}
+.detail-page.show{display:flex}
+.detail-header{display:flex;align-items:center;padding:10px 16px;background:#fff;gap:12px;position:sticky;top:0;z-index:10}
+.detail-back{font-size:22px;cursor:pointer;color:#333;width:30px}
+.detail-title{font-size:16px;font-weight:600;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.detail-cover{width:100%;max-height:260px;object-fit:cover;background:#f0f0f0}
+.detail-section{background:#fff;margin:8px 0;padding:14px 16px}
+.detail-section .section-title{font-size:14px;font-weight:600;margin-bottom:8px}
+.detail-name{font-size:20px;font-weight:700;margin-bottom:8px}
+.detail-meta{font-size:13px;color:#666;margin-bottom:6px}
+.btn-primary{display:block;width:calc(100% - 32px);margin:10px 16px;height:44px;background:#07C160;color:#fff;font-size:15px;border:none;border-radius:22px;cursor:pointer}
+.btn-secondary{display:block;width:calc(100% - 32px);margin:0 16px 10px;height:44px;background:#FFD100;color:#333;font-size:15px;border:none;border-radius:22px;cursor:pointer}
+
+/* ===== City Picker Panel ===== */
+.city-panel{position:fixed;top:0;left:50%;transform:translateX(-50%);width:414px;max-width:100vw;height:100vh;background:#fff;z-index:1800;display:none;flex-direction:column}
+.city-panel.show{display:flex}
+.city-panel-header{display:flex;align-items:center;padding:10px 16px;gap:10px;border-bottom:1px solid #eee}
+.city-panel-back{font-size:22px;cursor:pointer;color:#333}
+.city-search-wrap{flex:1;display:flex;align-items:center;height:36px;background:#f5f5f5;border-radius:18px;padding:0 12px;gap:6px}
+.city-search-wrap input{flex:1;border:none;background:transparent;font-size:14px;color:#333;outline:none}
+.city-search-wrap .clear-btn{width:22px;height:22px;border-radius:50%;background:#ccc;color:#fff;font-size:12px;display:none;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0}
+.city-search-wrap .clear-btn.visible{display:flex}
+.search-results{flex:1;overflow-y:auto}
+.search-results .result-item{padding:14px 16px;font-size:15px;border-bottom:1px solid #f5f5f5;cursor:pointer}
+.search-results .result-item:active{background:#f5f5f5}
+.city-content{flex:1;display:flex;overflow:hidden;position:relative}
+.city-content.searching{display:none}
+.current-city-row{padding:14px 16px;border-bottom:1px solid #f0f0f0;cursor:pointer}
+.current-city-row .label{font-size:11px;color:#999}
+.current-city-row .name{font-size:16px;font-weight:600;margin-top:4px;display:flex;justify-content:space-between}
+.current-city-row .reload{font-size:13px;color:#07C160}
+.hot-section{padding:12px 16px;border-bottom:1px solid #f0f0f0}
+.hot-section .label{font-size:11px;color:#999;margin-bottom:8px}
+.hot-grid{display:flex;flex-wrap:wrap;gap:8px}
+.hot-chip{padding:6px 16px;background:#f5f5f5;border-radius:6px;font-size:13px;cursor:pointer}
+.hot-chip:active{background:#e0e0e0}
+.city-scroll-wrap{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.city-group .letter-header{padding:6px 16px;font-size:12px;color:#999;background:#f6f6f6;position:sticky;top:0}
+.city-group .city-row{padding:14px 16px;font-size:15px;border-bottom:1px solid #f5f5f5;cursor:pointer}
+.city-group .city-row:active{background:#f5f5f5}
+.letter-index{position:absolute;right:4px;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;align-items:center;gap:1px;padding:4px 0;z-index:10}
+.letter-index .idx-dot{width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:11px;color:#666;border-radius:50%;cursor:pointer}
+.letter-index .idx-dot.active{color:#fff;background:#07C160;font-weight:700}
+.letter-tooltip{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:60px;height:60px;background:rgba(0,0,0,.65);color:#fff;font-size:28px;border-radius:8px;display:none;align-items:center;justify-content:center;z-index:1900;pointer-events:none}
+.letter-tooltip.show{display:flex}
+
+/* ===== Toast ===== */
+.toast{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(0,0,0,.7);color:#fff;padding:12px 24px;border-radius:8px;font-size:14px;z-index:3000;display:none;pointer-events:none}
+.toast.show{display:block;animation:toastIn .2s}
+@keyframes toastIn{from{opacity:0;transform:translate(-50%,-50%) scale(.9)}to{opacity:1;transform:translate(-50%,-50%) scale(1)}}
+
+.sheet-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.4);display:none;z-index:2000}
+.sheet-overlay.show{display:block}
+.sheet-panel{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:414px;max-width:100vw;background:#fff;border-radius:16px 16px 0 0;padding:12px 0 24px;z-index:2001}
+.sheet-item{padding:14px 20px;font-size:16px;text-align:center;cursor:pointer}
+.sheet-item:active{background:#f5f5f5}
+.sheet-cancel{margin-top:8px;border-top:6px solid #f5f5f5;padding-top:14px;color:#999}
+
+@media(max-width:414px){body::before{display:none}.tabbar{left:0;transform:none}.detail-page,.city-panel{left:0;transform:none}.sheet-panel{left:0;transform:none}}
+</style>
+</head>
+<body>
+
+<!-- ======== MAP PAGE ======== -->
+<div class="page active" id="page-map">
+  <div class="top-bar">
+    <div class="city-picker" onclick="openCityPicker()"><span id="currentCityName">杭州市</span> <span class="city-arrow">▼</span></div>
+    <div class="search-box" onclick="showToast('搜索(开发中)')"><span>🔍 搜索美食、商圈、地址</span></div>
+  </div>
+  <div class="category-scroll" id="catBar">
+    <div class="cat-chip active" data-cat="全部" onclick="filterCategory(this)">全部</div>
+    <div class="cat-chip" data-cat="火锅" onclick="filterCategory(this)">火锅</div>
+    <div class="cat-chip" data-cat="日料" onclick="filterCategory(this)">日料</div>
+    <div class="cat-chip" data-cat="烧烤" onclick="filterCategory(this)">烧烤</div>
+    <div class="cat-chip" data-cat="咖啡" onclick="filterCategory(this)">咖啡</div>
+    <div class="cat-chip" data-cat="甜品" onclick="filterCategory(this)">甜品</div>
+    <div class="cat-chip" data-cat="川菜" onclick="filterCategory(this)">川菜</div>
+    <div class="cat-chip" data-cat="小吃" onclick="filterCategory(this)">小吃</div>
+  </div>
+  <div class="map-wrap" id="mapWrap">
+    <div class="map-placeholder">
+      <div class="pin">🗺️</div>
+      <div style="font-size:13px;color:#666;margin-top:4px">高德地图 · 周边美食</div>
+      <div class="hint" id="mapHint">点击下方卡片查看Marker</div>
+    </div>
+    <div class="locate-btn" onclick="showToast('定位中...')">📍</div>
+  </div>
+  <div class="card-scroll" id="cardScroll"></div>
+</div>
+
+<!-- ======== EXPLORE PAGE ======== -->
+<div class="page" id="page-explore">
+  <div class="search-bar"><div class="search-box" onclick="showToast('搜索(开发中)')"><span>🔍 搜索探店笔记标题、地点</span></div></div>
+  <div class="filter-bar">
+    <span class="active" data-sort="latest" onclick="sortPosts(this)">最新发布</span>
+    <span data-sort="popular" onclick="sortPosts(this)">最多收藏</span>
+    <span data-sort="views" onclick="sortPosts(this)">最多浏览</span>
+  </div>
+  <div class="category-scroll">
+    <div class="cat-chip active" data-cat="全部" onclick="filterExploreCat(this)">全部</div>
+    <div class="cat-chip" data-cat="火锅" onclick="filterExploreCat(this)">火锅</div>
+    <div class="cat-chip" data-cat="日料" onclick="filterExploreCat(this)">日料</div>
+    <div class="cat-chip" data-cat="烧烤" onclick="filterExploreCat(this)">烧烤</div>
+    <div class="cat-chip" data-cat="咖啡" onclick="filterExploreCat(this)">咖啡</div>
+  </div>
+  <div class="waterfall" id="waterfall"></div>
+</div>
+
+<!-- ======== MINE PAGE ======== -->
+<div class="page" id="page-mine">
+  <div class="user-header">
+    <div class="user-bg"></div>
+    <div class="user-row">
+      <div class="user-avatar" onclick="onEditProfile()">👤</div>
+      <div><div class="user-name" id="displayName">美食爱好者</div><div class="user-desc">点击登录享受更多功能</div></div>
+      <div class="edit-tag" onclick="onEditProfile()">编辑资料</div>
+    </div>
+  </div>
+  <div class="stats-row">
+    <div class="stat-item" onclick="switchTab('explore')"><div class="stat-num" id="favCount">0</div><div class="stat-label">收藏</div></div>
+    <div class="stat-divider"></div>
+    <div class="stat-item" onclick="switchTab('explore')"><div class="stat-num" id="histCount">0</div><div class="stat-label">浏览记录</div></div>
+  </div>
+  <div class="menu-list">
+    <div class="menu-item" onclick="showToast('收藏列表(开发中)')"><span>❤️ 我的收藏</span><span class="menu-arrow">›</span></div>
+    <div class="menu-item" onclick="showToast('浏览记录(开发中)')"><span>🕐 浏览记录</span><span class="menu-arrow">›</span></div>
+    <div class="menu-item" onclick="onEditProfile()"><span>⚙️ 设置</span><span class="menu-arrow">›</span></div>
+    <div class="menu-item" onclick="showToast('关于美食地图')"><span>ℹ️ 关于美食地图</span><span class="menu-arrow">›</span></div>
+  </div>
+  <div class="login-area"><button class="btn-login" onclick="doLogin()">微信一键登录 (Demo)</button></div>
+</div>
+
+<!-- ======== CITY PICKER PANEL ======== -->
+<div class="city-panel" id="cityPanel">
+  <div class="city-panel-header">
+    <div class="city-panel-back" onclick="closeCityPicker()">←</div>
+    <div class="city-search-wrap">
+      <span style="font-size:14px">🔍</span>
+      <input type="text" id="citySearchInput" placeholder="搜索城市名" oninput="onCitySearch(this.value)">
+      <div class="clear-btn" id="clearSearchBtn" onclick="clearCitySearch()">✕</div>
+    </div>
+  </div>
+  <div class="search-results" id="searchResults" style="display:none"></div>
+  <div class="city-content" id="cityContent">
+    <div class="current-city-row" onclick="selectCity(currentCity)">
+      <div class="label">当前定位</div>
+      <div class="name"><span>📍 <span id="cpCurrentName">杭州市</span></span><span class="reload">⟳</span></div>
+    </div>
+    <div class="hot-section">
+      <div class="label">热门城市</div>
+      <div class="hot-grid" id="hotGrid"></div>
+    </div>
+    <div class="city-scroll-wrap" id="cityScrollWrap"></div>
+    <div class="letter-index" id="letterIndex"></div>
+  </div>
+  <div class="letter-tooltip" id="letterTooltip"></div>
+</div>
+
+<!-- ======== TAB BAR ======== -->
+<div class="tabbar">
+  <div class="tab-item active" data-tab="map" onclick="switchTab('map')"><span class="tab-icon">🗺️</span><span>地图</span></div>
+  <div class="tab-item" data-tab="explore" onclick="switchTab('explore')"><span class="tab-icon">📹</span><span>探店</span></div>
+  <div class="tab-item" data-tab="mine" onclick="switchTab('mine')"><span class="tab-icon">👤</span><span>我的</span></div>
+</div>
+
+<!-- ======== SHOP DETAIL ======== -->
+<div class="detail-page" id="shopDetail">
+  <div class="detail-header"><div class="detail-back" onclick="closeDetail('shopDetail')">←</div><div class="detail-title" id="shopDetailTitle">店铺详情</div></div>
+  <img class="detail-cover" id="shopDetailImg" src="" alt="">
+  <div class="detail-section">
+    <div class="detail-name" id="shopDetailName"></div>
+    <div class="detail-meta" id="shopDetailMeta"></div>
+    <div class="detail-meta" id="shopDetailAddr"></div>
+  </div>
+  <div class="detail-section"><div class="section-title">📍 附近位置</div><div style="height:160px;background:#e8f4fd;border-radius:8px;display:flex;align-items:center;justify-content:center">点击查看地图导航</div></div>
+  <button class="btn-primary" onclick="showToast('已跳转地图导航')">🧭 跳转地图导航</button>
+  <button class="btn-secondary" onclick="showToast('已复制美团团购链接')">🛒 查看美团团购</button>
+</div>
+
+<!-- ======== POST DETAIL ======== -->
+<div class="detail-page" id="postDetail">
+  <div class="detail-header"><div class="detail-back" onclick="closeDetail('postDetail')">←</div><div class="detail-title" id="postDetailTitle">探店详情</div></div>
+  <div style="position:relative;cursor:pointer" onclick="showToast('视频链接已复制，请到外部平台观看')">
+    <img class="detail-cover" id="postDetailImg" src="" alt="">
+    <div class="play-overlay" style="width:56px;height:56px;background:rgba(0,0,0,.5)"></div>
+  </div>
+  <div class="detail-section"><div class="detail-name" id="postDetailName"></div><div class="detail-meta" id="postDetailStats"></div></div>
+  <div class="detail-section">
+    <div class="section-title">作者</div>
+    <div style="display:flex;align-items:center;gap:10px">
+      <div style="width:40px;height:40px;border-radius:50%;background:#f0f0f0;display:flex;align-items:center;justify-content:center;font-size:20px">👤</div>
+      <div><div style="font-weight:600" id="postAuthor"></div><div style="font-size:11px;color:#07C160">探店达人</div></div>
+    </div>
+  </div>
+  <div class="detail-section" id="postShopCard"></div>
+  <div style="position:sticky;bottom:0;background:#fff;display:flex;border-top:1px solid #eee">
+    <div class="tab-item" id="favBtn" onclick="toggleFav()" style="padding:10px 0;font-size:13px">🤍 收藏</div>
+    <div class="tab-item" style="padding:10px 0;font-size:13px;border-left:1px solid #eee">📤 分享</div>
+  </div>
+</div>
+
+<!-- ======== TOAST & SHEET ======== -->
+<div class="toast" id="toast"></div>
+<div class="sheet-overlay" id="sheetOverlay" onclick="closeSheet()"></div>
+<div class="sheet-panel" id="sheetPanel">
+  <div class="sheet-item" onclick="changeNickname()">修改昵称</div>
+  <div class="sheet-item" onclick="showToast('头像上传(开发中)')">更换头像</div>
+  <div class="sheet-cancel sheet-item" onclick="closeSheet()">取消</div>
+</div>
+
+<script>
+// ============ CITY DATA ============
+var CITY_LIST = [
+  {name:"北京市",pinyin:"beijing",letter:"B",lat:39.9042,lng:116.4074},
+  {name:"上海市",pinyin:"shanghai",letter:"S",lat:31.2304,lng:121.4737},
+  {name:"广州市",pinyin:"guangzhou",letter:"G",lat:23.1291,lng:113.2644},
+  {name:"深圳市",pinyin:"shenzhen",letter:"S",lat:22.5431,lng:114.0579},
+  {name:"杭州市",pinyin:"hangzhou",letter:"H",lat:30.2741,lng:120.1551},
+  {name:"成都市",pinyin:"chengdu",letter:"C",lat:30.5728,lng:104.0668},
+  {name:"重庆市",pinyin:"chongqing",letter:"C",lat:29.4316,lng:106.9123},
+  {name:"武汉市",pinyin:"wuhan",letter:"W",lat:30.5928,lng:114.3055},
+  {name:"南京市",pinyin:"nanjing",letter:"N",lat:32.0603,lng:118.7969},
+  {name:"苏州市",pinyin:"suzhou",letter:"S",lat:31.299,lng:120.5853},
+  {name:"天津市",pinyin:"tianjin",letter:"T",lat:39.0842,lng:117.2009},
+  {name:"西安市",pinyin:"xian",letter:"X",lat:34.3416,lng:108.9398},
+  {name:"长沙市",pinyin:"changsha",letter:"C",lat:28.2282,lng:112.9388},
+  {name:"厦门市",pinyin:"xiamen",letter:"X",lat:24.4798,lng:118.0894},
+  {name:"青岛市",pinyin:"qingdao",letter:"Q",lat:36.0671,lng:120.3826},
+  {name:"大连市",pinyin:"dalian",letter:"D",lat:38.914,lng:121.6147},
+  {name:"郑州市",pinyin:"zhengzhou",letter:"Z",lat:34.7466,lng:113.6254},
+  {name:"济南市",pinyin:"jinan",letter:"J",lat:36.6512,lng:116.9972},
+  {name:"合肥市",pinyin:"hefei",letter:"H",lat:31.8206,lng:117.2272},
+  {name:"南昌市",pinyin:"nanchang",letter:"N",lat:28.682,lng:115.8582},
+  {name:"福州市",pinyin:"fuzhou",letter:"F",lat:26.0745,lng:119.2965},
+  {name:"昆明市",pinyin:"kunming",letter:"K",lat:25.0389,lng:102.7183},
+  {name:"贵阳市",pinyin:"guiyang",letter:"G",lat:26.647,lng:106.6302},
+  {name:"沈阳市",pinyin:"shenyang",letter:"S",lat:41.8057,lng:123.4315},
+  {name:"哈尔滨市",pinyin:"haerbin",letter:"H",lat:45.8038,lng:126.535},
+  {name:"长春市",pinyin:"changchun",letter:"C",lat:43.817,lng:125.3235},
+  {name:"太原市",pinyin:"taiyuan",letter:"T",lat:37.8706,lng:112.5489},
+  {name:"石家庄市",pinyin:"shijiazhuang",letter:"S",lat:38.0428,lng:114.5149},
+  {name:"南宁市",pinyin:"nanning",letter:"N",lat:22.817,lng:108.3665},
+  {name:"海口市",pinyin:"haikou",letter:"H",lat:20.044,lng:110.1999},
+  {name:"兰州市",pinyin:"lanzhou",letter:"L",lat:36.0611,lng:103.8343},
+  {name:"无锡市",pinyin:"wuxi",letter:"W",lat:31.4912,lng:120.3119},
+  {name:"宁波市",pinyin:"ningbo",letter:"N",lat:29.8683,lng:121.544},
+  {name:"温州市",pinyin:"wenzhou",letter:"W",lat:28.0015,lng:120.6994},
+  {name:"珠海市",pinyin:"zhuhai",letter:"Z",lat:22.2707,lng:113.5767},
+  {name:"佛山市",pinyin:"foshan",letter:"F",lat:23.0218,lng:113.1214},
+  {name:"东莞市",pinyin:"dongguan",letter:"D",lat:23.0208,lng:113.7518},
+  {name:"三亚市",pinyin:"sanya",letter:"S",lat:18.2528,lng:109.512},
+  {name:"桂林市",pinyin:"guilin",letter:"G",lat:25.2736,lng:110.2901}
+];
+
+var HOT_NAMES = ["北京市","上海市","广州市","深圳市","杭州市","成都市","重庆市","武汉市","南京市","西安市"];
+var currentCity = CITY_LIST.find(function(c){return c.name==='杭州市'});
+
+// build city groups
+function buildCityData(){
+  var groups={};
+  CITY_LIST.forEach(function(c){
+    if(!groups[c.letter]) groups[c.letter]=[];
+    groups[c.letter].push(c);
+  });
+  var letters=Object.keys(groups).sort();
+  var html='';
+  letters.forEach(function(l){
+    html+='<div class="city-group" id="cg-'+l+'"><div class="letter-header">'+l+'</div>';
+    groups[l].forEach(function(c){html+='<div class="city-row" onclick="selectCity(autoCity(\''+c.name+'\'))">'+c.name+'</div>'});
+    html+='</div>';
+  });
+  document.getElementById('cityScrollWrap').innerHTML=html;
+
+  var idxHtml='';
+  letters.forEach(function(l){idxHtml+='<div class="idx-dot" data-letter="'+l+'" onclick="scrollToLetter(\''+l+'\')">'+l+'</div>'});
+  document.getElementById('letterIndex').innerHTML=idxHtml;
+
+  var hotHtml='';
+  HOT_NAMES.forEach(function(n){
+    var c=CITY_LIST.find(function(x){return x.name===n});
+    if(c) hotHtml+='<div class="hot-chip" onclick="selectCity(autoCity(\''+c.name+'\'))">'+n+'</div>';
+  });
+  document.getElementById('hotGrid').innerHTML=hotHtml;
+}
+
+function autoCity(name){return CITY_LIST.find(function(c){return c.name===name})}
+
+// ============ CITY PICKER ============
+function openCityPicker(){
+  document.getElementById('cityPanel').classList.add('show');
+  document.getElementById('cpCurrentName').textContent=currentCity.name;
+  document.getElementById('citySearchInput').value='';
+  document.getElementById('searchResults').style.display='none';
+  document.getElementById('cityContent').classList.remove('searching');
+  document.getElementById('clearSearchBtn').classList.remove('visible');
+}
+
+function closeCityPicker(){
+  document.getElementById('cityPanel').classList.remove('show');
+}
+
+function selectCity(city){
+  if(!city)return;
+  currentCity=city;
+  document.getElementById('currentCityName').textContent=city.name;
+  document.getElementById('cpCurrentName').textContent=city.name;
+  closeCityPicker();
+  showToast('已切换到 '+city.name);
+  renderShopCards(getActiveCategory());
+}
+
+function onCitySearch(val){
+  var kw=val.trim().toLowerCase();
+  var clearBtn=document.getElementById('clearSearchBtn');
+  var searchRes=document.getElementById('searchResults');
+  var cityContent=document.getElementById('cityContent');
+
+  if(kw){
+    clearBtn.classList.add('visible');
+    var results=CITY_LIST.filter(function(c){return c.name.indexOf(val)!==-1||c.pinyin.indexOf(kw)!==-1});
+    var html='';
+    if(results.length===0)html='<div style="text-align:center;padding:60px 0;color:#999">未找到匹配城市</div>';
+    else results.forEach(function(c){html+='<div class="result-item" onclick="selectCity(autoCity(\''+c.name+'\'))">'+c.name+'</div>'});
+    searchRes.innerHTML=html;
+    searchRes.style.display='block';
+    cityContent.classList.add('searching');
+  }else{
+    clearBtn.classList.remove('visible');
+    searchRes.style.display='none';
+    cityContent.classList.remove('searching');
+  }
+}
+
+function clearCitySearch(){
+  document.getElementById('citySearchInput').value='';
+  onCitySearch('');
+}
+
+function scrollToLetter(letter){
+  var el=document.getElementById('cg-'+letter);
+  if(el) el.scrollIntoView({behavior:'smooth',block:'start'});
+  showLetterTooltip(letter);
+}
+
+// Letter index touch handling
+(function(){
+  var tooltip=document.getElementById('letterTooltip');
+  var letterIdx=document.getElementById('letterIndex');
+  var scrollWrap=document.getElementById('cityScrollWrap');
+  var dots,letters=[];
+
+  function getDots(){dots=letterIdx.querySelectorAll('.idx-dot');letters=[];dots.forEach(function(d){letters.push(d.dataset.letter)});return dots}
+
+  letterIdx.addEventListener('touchstart',function(e){
+    getDots();handleTouch(e);
+  });
+  letterIdx.addEventListener('touchmove',function(e){
+    e.preventDefault();handleTouch(e);
+  });
+  letterIdx.addEventListener('touchend',function(){
+    tooltip.classList.remove('show');
+  });
+
+  function handleTouch(e){
+    var touch=e.touches[0];
+    var ds=getDots();
+    ds.forEach(function(d,i){
+      var r=d.getBoundingClientRect();
+      if(touch.clientY>=r.top&&touch.clientY<=r.bottom&&letters[i]){
+        scrollToLetter(letters[i]);
+      }
+    });
+  }
+
+  function showLetterTooltip(l){
+    tooltip.textContent=l;tooltip.classList.add('show');
+    clearTimeout(tooltip._t);
+    tooltip._t=setTimeout(function(){tooltip.classList.remove('show')},600);
+  }
+})();
+
+function getActiveCategory(){
+  var act=document.querySelector('#catBar .cat-chip.active');
+  return act?act.dataset.cat:'全部';
+}
+
+// ============ SHOP DATA ============
+var shopData = [
+  {id:'s1',name:'海底捞火锅(湖滨店)',category:'火锅',rating:'4.8',avg_price:'130',distance:'1.2km',address:'杭州市上城区湖滨路88号',thumb:'🍲'},
+  {id:'s2',name:'一风堂日式拉面',category:'日料',rating:'4.6',avg_price:'68',distance:'1.8km',address:'杭州市拱墅区武林路55号',thumb:'🍜'},
+  {id:'s3',name:'老乾杯炭火烧肉',category:'烧烤',rating:'4.7',avg_price:'220',distance:'2.5km',address:'杭州市西湖区延安路120号',thumb:'🥩'},
+  {id:'s4',name:'% Arabica咖啡',category:'咖啡',rating:'4.5',avg_price:'40',distance:'0.8km',address:'杭州市上城区南山路12号',thumb:'☕'},
+  {id:'s5',name:'满记甜品(银泰店)',category:'甜品',rating:'4.4',avg_price:'35',distance:'3.1km',address:'杭州市下城区延安路200号',thumb:'🍰'},
+  {id:'s6',name:'川味观·精品川菜',category:'川菜',rating:'4.6',avg_price:'95',distance:'1.5km',address:'杭州市西湖区文二路33号',thumb:'🌶️'},
+  {id:'s7',name:'新丰小吃(河坊街)',category:'小吃',rating:'4.3',avg_price:'25',distance:'0.5km',address:'杭州市上城区河坊街45号',thumb:'🥟'},
+  {id:'s8',name:'山葵家精致日料',category:'日料',rating:'4.8',avg_price:'380',distance:'4.2km',address:'杭州市滨江区江南大道99号',thumb:'🍣'}
+];
+
+var postData = [
+  {id:'p1',title:'这家隐藏在湖滨巷子里的火锅店，牛油锅底绝了！',author:'杭州吃货小王',cover:'🍲',views:3420,favs:128,shopId:'s1'},
+  {id:'p2',title:'日料控必打卡！人均68元的宝藏拉面店',author:'美食地图君',cover:'🍜',views:2891,favs:95,shopId:'s2'},
+  {id:'p3',title:'杭州烤肉天花板！和牛吃到扶墙出',author:'吃货小分队',cover:'🥩',views:5102,favs:203,shopId:'s3'},
+  {id:'p4',title:'南山路上的Ins风咖啡店，随手一拍都是大片',author:'咖啡控阿May',cover:'☕',views:1680,favs:67,shopId:'s4'},
+  {id:'p5',title:'银泰这家甜品店，芒果班戟夏天必吃',author:'甜心少女',cover:'🍰',views:920,favs:42,shopId:'s5'},
+  {id:'p6',title:'杭州川菜新地标！水煮鱼麻辣鲜香一口入魂',author:'辣味研究所',cover:'🌶️',views:4560,favs:178,shopId:'s6'},
+  {id:'p7',title:'河坊街老底子味道！30年小吃店良心推荐',author:'老杭州指南',cover:'🥟',views:2340,favs:89,shopId:'s7'},
+  {id:'p8',title:'滨江高端日料新店探店，380元一位值不值？',author:'杭州吃货小王',cover:'🍣',views:6780,favs:256,shopId:'s8'}
+];
+
+var favedPosts={},browseHistory=[],currentPostId=null,isLoggedIn=false;
+
+// ============ TAB SWITCHING ============
+function switchTab(tab){
+  document.querySelectorAll('.page').forEach(function(p){p.classList.remove('active')});
+  document.querySelectorAll('.tab-item').forEach(function(t){t.classList.remove('active')});
+  document.getElementById('page-'+tab).classList.add('active');
+  document.querySelector('.tab-item[data-tab="'+tab+'"]').classList.add('active');
+}
+
+// ============ MAP ============
+function renderShopCards(filter){
+  var cat=filter||'全部';
+  var filtered=shopData.filter(function(s){return cat==='全部'||s.category===cat});
+  var html=filtered.map(function(s){
+    return '<div class="shop-card" id="card-'+s.id+'" onclick="openShopDetail(\''+s.id+'\')">'+
+      '<div class="thumb" style="position:relative">'+s.thumb+'<div class="rating">⭐ '+s.rating+'</div></div>'+
+      '<div class="info"><div class="name">'+s.name+'</div><div class="meta">'+s.category+' · 人均 ¥'+s.avg_price+'</div><div class="dist">📍 距你'+s.distance+'</div></div></div>';
+  }).join('');
+  document.getElementById('cardScroll').innerHTML=html;
+  document.getElementById('mapHint').textContent='共 '+filtered.length+' 家店铺';
+}
+
+function filterCategory(el){
+  document.querySelectorAll('#catBar .cat-chip').forEach(function(c){c.classList.remove('active')});
+  el.classList.add('active');
+  renderShopCards(el.dataset.cat);
+}
+
+// ============ EXPLORE ============
+function renderPosts(sort,cat){
+  var list=postData.slice();
+  if(cat&&cat!=='全部'){list=list.filter(function(p){var s=findShop(p.shopId);return s&&s.category===cat})}
+  if(sort==='popular'){list.sort(function(a,b){return b.favs-a.favs})}
+  else if(sort==='views'){list.sort(function(a,b){return b.views-a.views})}
+  var left=[],right=[];
+  list.forEach(function(p,i){if(i%2===0)left.push(p);else right.push(p)});
+  [left,right].forEach(function(col,ci){
+    var h=col.map(function(p){
+      return '<div class="post-card" onclick="openPostDetail(\''+p.id+'\')">'+
+        '<div class="post-cover-wrap" style="height:'+(140+Math.random()*60)+'px">'+p.cover+'</div>'+
+        '<div class="post-title">'+p.title+'</div><div class="post-meta"><span>'+p.author+'</span><span>'+p.views+' 浏览</span></div></div>';
+    }).join('');
+    document.querySelectorAll('#waterfall .waterfall-col')[ci].innerHTML=h;
+  });
+}
+
+function sortPosts(el){
+  el.parentElement.querySelectorAll('span').forEach(function(s){s.classList.remove('active')});
+  el.classList.add('active');
+  renderPosts(el.dataset.sort);
+}
+
+function filterExploreCat(el){
+  el.parentElement.querySelectorAll('.cat-chip').forEach(function(c){c.classList.remove('active')});
+  el.classList.add('active');
+  renderPosts(null,el.dataset.cat);
+}
+
+// ============ HELPERS ============
+function findShop(id){return shopData.find(function(s){return s.id===id})}
+function findPost(id){return postData.find(function(p){return p.id===id})}
+
+// ============ SHOP DETAIL ============
+function openShopDetail(id){
+  var s=findShop(id);if(!s)return;
+  document.getElementById('shopDetailTitle').textContent=s.name;
+  document.getElementById('shopDetailName').textContent=s.name;
+  document.getElementById('shopDetailMeta').textContent='⭐ '+s.rating+' · '+s.category+' · 人均 ¥'+s.avg_price;
+  document.getElementById('shopDetailAddr').textContent='📍 '+s.address;
+  document.getElementById('shopDetailImg').src='https://placehold.co/400x220/E8F4FD/333?text='+encodeURIComponent(s.name);
+  document.getElementById('shopDetail').classList.add('show');
+}
+
+// ============ POST DETAIL ============
+function openPostDetail(id){
+  var p=findPost(id);if(!p)return;
+  currentPostId=id;
+  document.getElementById('postDetailTitle').textContent=p.title;
+  document.getElementById('postDetailName').textContent=p.title;
+  document.getElementById('postDetailStats').textContent='👁️ '+p.views+' 浏览 · ❤️ '+p.favs+' 收藏';
+  document.getElementById('postAuthor').textContent=p.author;
+  document.getElementById('postDetailImg').src='https://placehold.co/400x240/333/white?text='+encodeURIComponent('Video');
+  var s=findShop(p.shopId),shopHtml='';
+  if(s){shopHtml='<div class="section-title">探店店铺</div><div style="font-weight:600;font-size:15px">'+s.name+'</div><div style="font-size:12px;color:#999;margin:4px 0">'+s.category+' · 人均 ¥'+s.avg_price+'</div><div style="font-size:12px;color:#999;margin-bottom:10px">📍 '+s.address+'</div><div style="display:flex;gap:8px"><button class="btn-primary" style="margin:0;font-size:12px;height:36px;flex:1" onclick="showToast(\'已跳转地图导航\')">🧭 地图导航</button><button class="btn-secondary" style="margin:0;font-size:12px;height:36px;flex:1" onclick="showToast(\'已复制团购链接\')">🛒 美团团购</button></div>'}
+  document.getElementById('postShopCard').innerHTML=shopHtml;
+  updateFavBtn();document.getElementById('postDetail').classList.add('show');
+  if(browseHistory.indexOf(id)===-1)browseHistory.push(id);
+  document.getElementById('histCount').textContent=browseHistory.length;
+}
+
+function closeDetail(id){document.getElementById(id).classList.remove('show')}
+
+function toggleFav(){
+  if(!isLoggedIn){showToast('请先登录');return}
+  if(!currentPostId)return;
+  if(favedPosts[currentPostId]){delete favedPosts[currentPostId];showToast('已取消收藏')}
+  else{favedPosts[currentPostId]=true;showToast('已收藏')}
+  updateFavBtn();
+  document.getElementById('favCount').textContent=Object.keys(favedPosts).length;
+}
+
+function updateFavBtn(){
+  var btn=document.getElementById('favBtn');
+  if(favedPosts[currentPostId]){btn.innerHTML='❤️ 已收藏';btn.style.color='#e54545'}
+  else{btn.innerHTML='🤍 收藏';btn.style.color='#666'}
+}
+
+// ============ MINE ============
+function doLogin(){isLoggedIn=true;document.getElementById('displayName').textContent='美食爱好者';showToast('登录成功 (Demo模拟)')}
+function onEditProfile(){if(!isLoggedIn){doLogin();return}document.getElementById('sheetOverlay').classList.add('show')}
+function closeSheet(){document.getElementById('sheetOverlay').classList.remove('show')}
+function changeNickname(){closeSheet();var name=prompt('请输入新昵称:','美食爱好者');if(name&&name.trim()){document.getElementById('displayName').textContent=name.trim();showToast('修改成功')}}
+
+// ============ TOAST ============
+function showToast(msg){
+  var t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  clearTimeout(t._timeout);
+  t._timeout=setTimeout(function(){t.classList.remove('show')},1800);
+}
+
+// ============ INIT ============
+(function init(){
+  buildCityData();
+  renderShopCards();
+  var wf=document.getElementById('waterfall');
+  wf.innerHTML='<div class="waterfall-col"></div><div class="waterfall-col"></div>';
+  renderPosts();
+})();
+</script>
+</body>
+</html>

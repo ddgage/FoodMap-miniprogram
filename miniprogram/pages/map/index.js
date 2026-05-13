@@ -210,7 +210,7 @@ Page({
   },
 
   onCityTap: function () {
-    wx.showToast({ title: "城市切换开发中", icon: "none" });
+    wx.navigateTo({ url: "/pages/city-picker/index" });
   },
 
   onSearchTap: function () {

@@ -1,0 +1,83 @@
+<!--pages/city-picker/index.wxml-->
+<view class="page-container">
+  <!-- 搜索框 -->
+  <view class="search-wrap">
+    <view class="search-input-box">
+      <image class="search-icon" src="/images/icons/search.svg" mode="aspectFit"></image>
+      <input class="search-field" placeholder="搜索城市名"
+             value="{{keyword}}"
+             bindinput="onSearchInput"
+             bindconfirm="onSearchConfirm"
+             focus="{{autoFocus}}"
+             confirm-type="search"/>
+      <view class="search-clear" wx:if="{{keyword}}" bindtap="onClearSearch">✕</view>
+    </view>
+  </view>
+
+  <!-- 搜索结果 -->
+  <view class="search-result" wx:if="{{keyword}}">
+    <view class="result-empty" wx:if="{{searchList.length === 0}}">
+      <text>未找到匹配城市</text>
+    </view>
+    <view class="result-item" wx:for="{{searchList}}" wx:key="code"
+          bindtap="onCitySelect" data-city="{{item}}">
+      {{item.name}}
+    </view>
+  </view>
+
+  <!-- 城市列表（首字母分组） -->
+  <view class="city-list-wrap" wx:else>
+    <!-- 当前定位 -->
+    <view class="current-city" bindtap="onCitySelect" data-city="{{currentCity}}">
+      <text class="current-label">当前定位</text>
+      <view class="current-name">
+        <text>📍 {{currentCity.name}}</text>
+        <text class="reload-icon">⟳</text>
+      </view>
+    </view>
+
+    <!-- 热门城市 -->
+    <view class="section">
+      <view class="section-title">热门城市</view>
+      <view class="hot-grid">
+        <view class="hot-item" wx:for="{{hotCities}}" wx:key="code"
+              bindtap="onCitySelect" data-city="{{item}}">
+          {{item.name}}
+        </view>
+      </view>
+    </view>
+
+    <!-- 首字母分组列表 -->
+    <scroll-view
+      class="city-scroll"
+      scroll-y
+      enable-flex
+      scroll-into-view="{{scrollToLetter}}"
+      scroll-with-animation
+      enhanced
+      show-scrollbar="{{false}}"
+    >
+      <view wx:for="{{cityGroups}}" wx:key="letter" id="group-{{item.letter}}">
+        <view class="letter-title">{{item.letter}}</view>
+        <view class="city-item" wx:for="{{item.cities}}" wx:key="code"
+              wx:for-item="city"
+              bindtap="onCitySelect" data-city="{{city}}">
+          {{city.name}}
+        </view>
+      </view>
+    </scroll-view>
+
+    <!-- 右侧字母索引条 -->
+    <view class="letter-bar"
+          catchtouchstart="onLetterTouchStart"
+          catchtouchmove="onLetterTouchMove"
+          catchtouchend="onLetterTouchEnd">
+      <view class="letter-dot {{scrollToLetter === 'group-' + item.letter ? 'active' : ''}}"
+            wx:for="{{letters}}" wx:key="*this"
+            data-letter="{{item}}"
+            catchtap="onLetterTap">
+        {{item}}
+      </view>
+    </view>
+  </view>
+</view>
