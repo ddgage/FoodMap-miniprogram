@@ -1,0 +1,4 @@
+<!--pages/mine/index.wxml-->
+<view class="page-container">
+  <view class="placeholder">我的页面开发中...</view>
+</view>

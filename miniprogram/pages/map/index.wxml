@@ -1,0 +1,88 @@
+<!--pages/map/index.wxml-->
+<view class="page-container">
+  <!-- 顶部搜索栏 -->
+  <view class="top-bar" style="padding-top: {{statusBarHeight}}px;">
+    <view class="top-bar-content">
+      <view class="city-picker" bindtap="onCityTap">
+        <text class="city-text">{{city}}</text>
+        <text class="city-arrow">▼</text>
+      </view>
+      <view class="search-box" bindtap="onSearchTap">
+        <image class="search-icon" src="/images/icons/search.svg" mode="aspectFit"></image>
+        <text class="search-placeholder">搜索美食、商圈、地址</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 分类筛选栏 -->
+  <scroll-view class="category-bar" scroll-x enable-flex show-scrollbar="{{false}}">
+    <view class="category-item {{currentCategory === item ? 'active' : ''}}"
+          wx:for="{{categories}}" wx:key="name"
+          data-category="{{item}}"
+          bindtap="onCategoryTap">
+      {{item}}
+    </view>
+  </scroll-view>
+
+  <!-- 地图区域 -->
+  <view class="map-container">
+    <map
+      id="foodMap"
+      class="food-map"
+      latitude="{{latitude}}"
+      longitude="{{longitude}}"
+      scale="{{scale}}"
+      markers="{{markers}}"
+      show-location="{{true}}"
+      bindmarkertap="onMarkerTap"
+      bindregionchange="onRegionChange"
+    >
+    </map>
+    <!-- 定位按钮 -->
+    <view class="locate-btn" bindtap="onLocateTap">
+      <image src="/images/icons/locate.png" mode="aspectFit"></image>
+    </view>
+  </view>
+
+  <!-- 底部店铺卡片列表 -->
+  <view class="card-list-container">
+    <scroll-view
+      class="card-list"
+      scroll-x
+      enable-flex
+      show-scrollbar="{{false}}"
+      scroll-into-view="{{scrollIntoView}}"
+      scroll-with-animation
+    >
+      <view
+        class="shop-card {{currentShopId === item._id ? 'active' : ''}}"
+        wx:for="{{shopList}}" wx:key="_id"
+        id="card-{{item._id}}"
+        data-index="{{index}}"
+        data-id="{{item._id}}"
+        bindtap="onCardDetail"
+      >
+        <view class="card-img-wrap">
+          <image class="card-img" src="{{item.photos[0] || '/images/default-goods-image.png'}}" mode="aspectFill"></image>
+          <view class="card-rating" wx:if="{{item.rating}}">⭐ {{item.rating}}</view>
+        </view>
+        <view class="card-info">
+          <view class="card-name ellipsis">{{item.name}}</view>
+          <view class="card-meta">
+            <text wx:if="{{item.category}}">{{item.category}}</text>
+            <text wx:if="{{item.avg_price}}"> · 人均 ¥{{item.avg_price}}</text>
+          </view>
+          <view class="card-distance" wx:if="{{item.distance}}">📍 距你{{item.distance}}</view>
+        </view>
+      </view>
+      <view class="card-empty" wx:if="{{shopList.length === 0 && !loading}}">
+        <text>附近暂无美食店铺</text>
+      </view>
+    </scroll-view>
+  </view>
+
+  <!-- Loading -->
+  <view class="loading-mask" wx:if="{{loading}}">
+    <view class="loading-spinner"></view>
+  </view>
+</view>

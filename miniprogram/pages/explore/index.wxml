@@ -1,0 +1,4 @@
+<!--pages/explore/index.wxml-->
+<view class="page-container">
+  <view class="placeholder">探店页面开发中...</view>
+</view>

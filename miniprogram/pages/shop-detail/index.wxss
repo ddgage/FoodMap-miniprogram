@@ -1,0 +1,142 @@
+/* pages/shop-detail/index.wxss */
+.page-container {
+  min-height: 100vh;
+  background: #f6f6f6;
+  padding-bottom: 40rpx;
+}
+
+/* 图片轮播 */
+.photo-swiper {
+  width: 100vw;
+  height: 400rpx;
+}
+
+.swiper-img {
+  width: 100%;
+  height: 100%;
+  background: #eee;
+}
+
+/* 基本信息 */
+.info-card {
+  background: #fff;
+  margin: 24rpx;
+  padding: 32rpx;
+  border-radius: 20rpx;
+}
+
+.shop-name {
+  font-size: 36rpx;
+  font-weight: 700;
+  color: #333;
+  margin-bottom: 16rpx;
+}
+
+.shop-meta {
+  display: flex;
+  gap: 20rpx;
+  margin-bottom: 16rpx;
+  font-size: 26rpx;
+  color: #666;
+}
+
+.rating {
+  color: #f5a623;
+}
+
+.shop-address, .shop-phone {
+  font-size: 26rpx;
+  color: #666;
+  margin-bottom: 8rpx;
+}
+
+/* 地图预览 */
+.map-preview {
+  margin: 0 24rpx 24rpx;
+  height: 280rpx;
+  border-radius: 20rpx;
+  overflow: hidden;
+  position: relative;
+}
+
+.mini-map {
+  width: 100%;
+  height: 100%;
+}
+
+.map-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0,0,0,0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.map-overlay text {
+  background: rgba(0,0,0,0.6);
+  color: #fff;
+  padding: 12rpx 32rpx;
+  border-radius: 32rpx;
+  font-size: 26rpx;
+}
+
+/* 操作按钮 */
+.action-buttons {
+  margin: 0 24rpx;
+  display: flex;
+  flex-direction: column;
+  gap: 24rpx;
+}
+
+.btn-nav, .btn-meituan {
+  width: 100%;
+  height: 88rpx;
+  border-radius: 44rpx;
+  font-size: 30rpx;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+}
+
+.btn-nav {
+  background: linear-gradient(135deg, #07C160, #06AD56);
+  color: #fff;
+}
+
+.btn-meituan {
+  background: #FFD100;
+  color: #333;
+}
+
+/* Loading */
+.loading-mask {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255,255,255,0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+}
+
+.loading-spinner {
+  width: 60rpx;
+  height: 60rpx;
+  border: 4rpx solid #eee;
+  border-top-color: #07C160;
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}

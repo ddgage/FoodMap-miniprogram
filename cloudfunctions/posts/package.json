@@ -1,0 +1,9 @@
+{
+  "name": "posts",
+  "version": "1.0.0",
+  "description": "探店笔记列表和详情",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~2.6.3"
+  }
+}
