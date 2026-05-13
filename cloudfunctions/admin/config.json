@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "openapi": []
+  },
+  "triggers": [
+    {
+      "name": "adminHttp",
+      "type": "http",
+      "config": {
+        "path": "/admin",
+        "method": ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
+      }
+    }
+  ]
+}
