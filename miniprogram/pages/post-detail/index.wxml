@@ -1,1 +1,80 @@
-<view class="page-container"><view class="placeholder">详情开发中...</view></view>
+<!--pages/post-detail/index.wxml-->
+<view class="page-container" wx:if="{{!loading}}">
+  <!-- 视频封面区域 -->
+  <view class="video-cover-wrap" bindtap="onVideoTap" wx:if="{{post.cover_image}}">
+    <image class="video-cover" src="{{post.cover_image}}" mode="widthFix"></image>
+    <view class="play-btn">
+      <view class="play-icon"></view>
+    </view>
+  </view>
+  <view class="video-cover-wrap no-cover" wx:else>
+    <image class="video-cover" src="/images/default-goods-image.png" mode="widthFix"></image>
+  </view>
+
+  <!-- 笔记信息 -->
+  <view class="post-info">
+    <view class="post-title">{{post.title}}</view>
+    <view class="post-stats">
+      <text class="stat-item">👁️ {{post.view_count || 0}} 浏览</text>
+      <text class="stat-item">❤️ {{post.fav_count || 0}} 收藏</text>
+    </view>
+  </view>
+
+  <!-- 作者信息 -->
+  <view class="author-card">
+    <image class="author-avatar" src="{{post.author_avatar || '/images/icons/avatar.png'}}" mode="aspectFill"></image>
+    <view class="author-info">
+      <view class="author-name">{{post.author_name || '匿名作者'}}</view>
+      <view class="author-label">探店达人</view>
+    </view>
+  </view>
+
+  <!-- 文字描述 -->
+  <view class="content-card" wx:if="{{post.content}}">
+    <view class="section-title">笔记内容</view>
+    <view class="content-text">{{post.content}}</view>
+  </view>
+
+  <!-- 标签 -->
+  <view class="tags-wrap" wx:if="{{post.tags && post.tags.length > 0}}">
+    <view class="tag-item" wx:for="{{post.tags}}" wx:key="*this">{{item}}</view>
+  </view>
+
+  <!-- 关联店铺卡片 -->
+  <view class="shop-card" wx:if="{{shop}}">
+    <view class="section-title">探店店铺</view>
+    <view class="shop-info-card">
+      <view class="shop-name">{{shop.name}}</view>
+      <view class="shop-meta">
+        <text wx:if="{{shop.category}}">{{shop.category}}</text>
+        <text wx:if="{{shop.avg_price}}"> · 人均 ¥{{shop.avg_price}}</text>
+        <text wx:if="{{shop.rating}}"> · ⭐ {{shop.rating}}</text>
+      </view>
+      <view class="shop-address" wx:if="{{shop.address}}">📍 {{shop.address}}</view>
+      <view class="shop-actions">
+        <button class="btn-shop-nav" bindtap="onMapNav" wx:if="{{shop.location}}">
+          跳转地图导航
+        </button>
+        <button class="btn-shop-meituan" bindtap="onMeituanTap" wx:if="{{shop.meituan_url}}">
+          查看美团团购
+        </button>
+      </view>
+    </view>
+  </view>
+
+  <!-- 底部操作栏 -->
+  <view class="bottom-bar safe-area-bottom">
+    <view class="bottom-action {{favorited ? 'favorited' : ''}}" bindtap="onToggleFav">
+      <text>{{favorited ? '❤️' : '🤍'}}</text>
+      <text>{{favorited ? '已收藏' : '收藏'}}</text>
+    </view>
+    <button class="btn-share" open-type="share">
+      <text>📤 分享</text>
+    </button>
+  </view>
+</view>
+
+<!-- Loading -->
+<view class="loading-mask" wx:if="{{loading}}">
+  <view class="loading-spinner"></view>
+</view>

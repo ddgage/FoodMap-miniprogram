@@ -1,4 +1,6 @@
 {
   "usingComponents": {},
-  "navigationBarTitleText": "探店"
+  "navigationBarTitleText": "探店",
+  "enablePullDownRefresh": true,
+  "onReachBottomDistance": 100
 }
