@@ -1,7 +1,7 @@
 // pages/map/index.js
 var api = require("../../utils/api");
 
-var CATEGORIES = ["全部", "火锅", "日料", "烧烤", "咖啡", "甜品", "川菜", "粤菜", "西餐", "小吃"];
+var DEFAULT_CATEGORIES = [{ name: "全部", _id: "all" }];
 
 Page({
   data: {
@@ -10,7 +10,7 @@ Page({
     latitude: 30.2741,
     longitude: 120.1551,
     scale: 14,
-    categories: CATEGORIES,
+    categories: DEFAULT_CATEGORIES,
     currentCategory: "全部",
     shopList: [],
     markers: [],
@@ -27,7 +27,26 @@ Page({
       latitude: app.globalData.latitude,
       longitude: app.globalData.longitude
     });
+    this.loadCategories();
     this.loadShops();
+  },
+
+  loadCategories: function () {
+    var that = this;
+    api.getCategories().then(function (res) {
+      var cats = (res.categories || []).map(function (c) {
+        return { name: c.name, _id: c._id, icon: c.icon };
+      });
+      cats.unshift({ name: "全部", _id: "all" });
+      that.setData({ categories: cats });
+    }).catch(function () {
+      // 降级使用默认分类
+      var fallback = ["全部", "火锅", "日料", "烧烤", "咖啡", "甜品", "川菜", "粤菜", "西餐", "小吃"];
+      var cats = fallback.map(function (name) {
+        return { name: name, _id: name };
+      });
+      that.setData({ categories: cats });
+    });
   },
 
   onShow: function () {

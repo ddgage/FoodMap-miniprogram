@@ -18,9 +18,9 @@ const { Header, Sider, Content } = Layout;
 const menuItems = [
   { key: '/dashboard', icon: <DashboardOutlined />, label: '数据概览' },
   { key: '/shops', icon: <ShopOutlined />, label: '店铺管理' },
-  { key: '/posts', icon: <FileTextOutlined />, label: '探店笔记', disabled: true },
-  { key: '/categories', icon: <AppstoreOutlined />, label: '分类管理', disabled: true },
-  { key: '/users', icon: <UserOutlined />, label: '用户管理', disabled: true }
+  { key: '/posts', icon: <FileTextOutlined />, label: '探店笔记' },
+  { key: '/categories', icon: <AppstoreOutlined />, label: '分类管理' },
+  { key: '/users', icon: <UserOutlined />, label: '用户管理' }
 ];
 
 export default function AdminLayout({ children }) {

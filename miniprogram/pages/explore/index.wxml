@@ -23,11 +23,11 @@
 
   <!-- 分类快速筛选 -->
   <scroll-view class="category-scroll" scroll-x enable-flex show-scrollbar="{{false}}">
-    <view class="cate-chip {{currentCategory === item ? 'active' : ''}}"
-          wx:for="{{categories}}" wx:key="*this"
-          data-category="{{item}}"
+    <view class="cate-chip {{currentCategory === item.name ? 'active' : ''}}"
+          wx:for="{{categories}}" wx:key="_id"
+          data-category="{{item.name}}"
           bindtap="onCategoryTap">
-      {{item}}
+      {{item.name}}
     </view>
   </scroll-view>
 

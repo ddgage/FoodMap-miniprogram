@@ -15,6 +15,7 @@ module.exports = {
   // POI
   nearbySearch: (params) => callFunction("poi", { action: "nearby", ...params }),
   getShopDetail: (params) => callFunction("poi", { action: "detail", ...params }),
+  getCategories: () => callFunction("poi", { action: "listCategories" }),
 
   // Posts
   getPostList: (params) => callFunction("posts", { action: "list", ...params }),

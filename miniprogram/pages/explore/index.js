@@ -1,11 +1,11 @@
 // pages/explore/index.js
 var api = require("../../utils/api");
 
-var CATEGORIES = ["全部", "火锅", "日料", "烧烤", "咖啡", "甜品", "川菜", "粤菜", "西餐", "小吃"];
+var DEFAULT_CATEGORIES = [{ name: "全部", _id: "all" }];
 
 Page({
   data: {
-    categories: CATEGORIES,
+    categories: DEFAULT_CATEGORIES,
     currentCategory: "全部",
     currentSort: "latest",
     postList: [],
@@ -18,7 +18,25 @@ Page({
   },
 
   onLoad: function () {
+    this.loadCategories();
     this.loadPosts();
+  },
+
+  loadCategories: function () {
+    var that = this;
+    api.getCategories().then(function (res) {
+      var cats = (res.categories || []).map(function (c) {
+        return { name: c.name, _id: c._id, icon: c.icon };
+      });
+      cats.unshift({ name: "全部", _id: "all" });
+      that.setData({ categories: cats });
+    }).catch(function () {
+      var fallback = ["全部", "火锅", "日料", "烧烤", "咖啡", "甜品", "川菜", "粤菜", "西餐", "小吃"];
+      var cats = fallback.map(function (name) {
+        return { name: name, _id: name };
+      });
+      that.setData({ categories: cats });
+    });
   },
 
   onPullDownRefresh: function () {

@@ -105,6 +105,17 @@ async function getShopDetail(params) {
   return { shop: res.data };
 }
 
+/**
+ * 获取活跃分类列表
+ */
+async function listCategories() {
+  const res = await db.collection("categories")
+    .where({ status: "active" })
+    .orderBy("sort_order", "asc")
+    .get();
+  return { categories: res.data };
+}
+
 exports.main = async (event, context) => {
   const { action } = event;
 
@@ -113,6 +124,8 @@ exports.main = async (event, context) => {
       return await nearbySearch(event);
     case "detail":
       return await getShopDetail(event);
+    case "listCategories":
+      return await listCategories();
     default:
       return { errCode: 400, errMsg: "Unknown action: " + action };
   }

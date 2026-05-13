@@ -96,11 +96,11 @@ function initMockDB() {
       }
     ],
     posts: [
-      { _id: 'p1', title: '杭州最正宗的日料探店', fav_count: 128, view_count: 1560, status: 'published', created_at: new Date('2025-05-08').toISOString() },
-      { _id: 'p2', title: '湖滨银泰美食合集', fav_count: 96, view_count: 2340, status: 'published', created_at: new Date('2025-05-09').toISOString() },
-      { _id: 'p3', title: '西湖边的宝藏咖啡店', fav_count: 75, view_count: 890, status: 'published', created_at: new Date('2025-05-10').toISOString() },
-      { _id: 'p4', title: '人均50吃到撑的烧烤', fav_count: 62, view_count: 1120, status: 'published', created_at: new Date('2025-05-11').toISOString() },
-      { _id: 'p5', title: '杭州火锅地图之城南篇', fav_count: 53, view_count: 670, status: 'published', created_at: new Date('2025-05-12').toISOString() }
+      { _id: 'p1', title: '杭州最正宗的日料探店', cover_image: '', video_url: 'https://www.bilibili.com/video/BV1xx411c7X8', shop_id: 's2', author_name: '美食猎人Leo', content: '这家日料店真的太惊艳了！食材新鲜，师傅手艺一流，强烈推荐他们的刺身拼盘和鳗鱼饭。', tags: ['日料', '刺身', '探店'], fav_count: 128, view_count: 1560, status: 'published', created_at: new Date('2025-05-08').toISOString() },
+      { _id: 'p2', title: '湖滨银泰美食合集', cover_image: '', video_url: 'https://www.bilibili.com/video/BV2xx411c8Y9', shop_id: 's1', author_name: '吃货小分队', content: '湖滨银泰商圈美食一网打尽！带你吃遍最火的几家店，从火锅到甜品应有尽有。', tags: ['火锅', '甜品', '美食合集'], fav_count: 96, view_count: 2340, status: 'published', created_at: new Date('2025-05-09').toISOString() },
+      { _id: 'p3', title: '西湖边的宝藏咖啡店', cover_image: '', video_url: 'https://www.bilibili.com/video/BV3xx411c9Z0', shop_id: 's4', author_name: '咖啡控小王', content: '西湖边散步偶然发现的宝藏咖啡店，环境超好，手冲咖啡味道绝了！', tags: ['咖啡', '西湖', '文艺'], fav_count: 75, view_count: 890, status: 'published', created_at: new Date('2025-05-10').toISOString() },
+      { _id: 'p4', title: '人均50吃到撑的烧烤', cover_image: '', video_url: 'https://www.bilibili.com/video/BV4xx411c0A1', shop_id: 's3', author_name: '省钱美食家', content: '人均50元的烧烤店，量大实惠味道好！羊肉串和烤茄子必点。', tags: ['烧烤', '平价', '夜宵'], fav_count: 62, view_count: 1120, status: 'published', created_at: new Date('2025-05-11').toISOString() },
+      { _id: 'p5', title: '杭州火锅地图之城南篇', cover_image: '', video_url: 'https://www.bilibili.com/video/BV5xx411c1B2', shop_id: 's1', author_name: '火锅侠', content: '带你吃遍杭州城南片区的火锅店，从四川火锅到潮汕牛肉火锅一网打尽。', tags: ['火锅', '美食地图'], fav_count: 53, view_count: 670, status: 'offline', created_at: new Date('2025-05-12').toISOString() }
     ],
     users: [
       { _id: 'u1', nickname: '美食达人小王', openid: 'oxxx1', status: 'active', last_login_at: new Date('2025-05-12').toISOString(), created_at: new Date('2025-05-01').toISOString() },
@@ -239,8 +239,146 @@ function mockToggleShopStatus(id) {
   return { status: db.shops[idx].status };
 }
 
+// ---- Posts mock handlers ----
+
+function mockListPosts(params) {
+  const db = getMockDB();
+  let list = [...db.posts];
+  const { keyword, status } = params || {};
+  if (keyword) list = list.filter(p => p.title.includes(keyword));
+  if (status) list = list.filter(p => p.status === status);
+  list.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+  const page = params?.page || 1;
+  const pageSize = params?.pageSize || 10;
+  const total = list.length;
+  const paged = list.slice((page - 1) * pageSize, page * pageSize);
+  return { list: paged, total, page, pageSize };
+}
+
+function mockGetPost(id) {
+  return getMockDB().posts.find(p => p._id === id);
+}
+
+function mockCreatePost(data) {
+  const db = getMockDB();
+  const post = {
+    _id: 'p' + Date.now(),
+    title: data.title,
+    cover_image: data.cover_image || '',
+    video_url: data.video_url || '',
+    shop_id: data.shop_id || '',
+    author_name: data.author_name || '',
+    content: data.content || '',
+    tags: data.tags || [],
+    view_count: 0,
+    fav_count: 0,
+    status: data.status || 'published',
+    created_at: new Date().toISOString()
+  };
+  db.posts.unshift(post);
+  saveMockDB(db);
+  return post;
+}
+
+function mockUpdatePost(id, data) {
+  const db = getMockDB();
+  const idx = db.posts.findIndex(p => p._id === id);
+  if (idx < 0) return null;
+  db.posts[idx] = { ...db.posts[idx], ...data };
+  saveMockDB(db);
+  return db.posts[idx];
+}
+
+function mockDeletePost(id) {
+  const db = getMockDB();
+  db.posts = db.posts.filter(p => p._id !== id);
+  saveMockDB(db);
+  return { success: true };
+}
+
+function mockTogglePostStatus(id) {
+  const db = getMockDB();
+  const idx = db.posts.findIndex(p => p._id === id);
+  if (idx < 0) return null;
+  db.posts[idx].status = db.posts[idx].status === 'published' ? 'offline' : 'published';
+  saveMockDB(db);
+  return { status: db.posts[idx].status };
+}
+
+// ---- Categories mock handlers ----
+
 function mockListCategories() {
-  return getMockDB().categories.filter(c => c.status === 'active');
+  return getMockDB().categories.sort((a, b) => a.sort_order - b.sort_order);
+}
+
+function mockCreateCategory(data) {
+  const db = getMockDB();
+  const cat = {
+    _id: 'c' + Date.now(),
+    name: data.name,
+    icon: data.icon || '',
+    sort_order: data.sort_order || 0,
+    status: data.status || 'active'
+  };
+  db.categories.push(cat);
+  saveMockDB(db);
+  return cat;
+}
+
+function mockUpdateCategory(id, data) {
+  const db = getMockDB();
+  const idx = db.categories.findIndex(c => c._id === id);
+  if (idx < 0) return null;
+  db.categories[idx] = { ...db.categories[idx], ...data };
+  saveMockDB(db);
+  return db.categories[idx];
+}
+
+function mockDeleteCategory(id) {
+  const db = getMockDB();
+  db.categories = db.categories.filter(c => c._id !== id);
+  saveMockDB(db);
+  return { success: true };
+}
+
+function mockToggleCategoryStatus(id) {
+  const db = getMockDB();
+  const idx = db.categories.findIndex(c => c._id === id);
+  if (idx < 0) return null;
+  db.categories[idx].status = db.categories[idx].status === 'active' ? 'offline' : 'active';
+  saveMockDB(db);
+  return { status: db.categories[idx].status };
+}
+
+// ---- Users mock handlers ----
+
+function mockListUsers(params) {
+  const db = getMockDB();
+  let list = [...db.users];
+  const { keyword, status } = params || {};
+  if (keyword) list = list.filter(u => u.nickname.includes(keyword) || u.openid.includes(keyword));
+  if (status) list = list.filter(u => u.status === status);
+  list.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+  const page = params?.page || 1;
+  const pageSize = params?.pageSize || 10;
+  const total = list.length;
+  const paged = list.slice((page - 1) * pageSize, page * pageSize);
+  return { list: paged, total, page, pageSize };
+}
+
+function mockToggleUserStatus(id) {
+  const db = getMockDB();
+  const idx = db.users.findIndex(u => u._id === id);
+  if (idx < 0) return null;
+  db.users[idx].status = db.users[idx].status === 'active' ? 'banned' : 'active';
+  saveMockDB(db);
+  return { status: db.users[idx].status };
+}
+
+// ---- Mock shop list for post form ----
+
+function mockActiveShops() {
+  return getMockDB().shops.filter(s => s.status === 'active').map(s => ({ _id: s._id, name: s.name }));
 }
 
 // ---- Token management ----
@@ -296,13 +434,31 @@ function mockCall(action, data) {
           case 'stats': result = mockStats(); break;
           case 'trend': result = mockTrend(); break;
           case 'hotFavs': result = mockHotFavs(); break;
+          // Shops
           case 'listShops': result = mockListShops(data); break;
           case 'getShop': result = mockGetShop(data.id); break;
           case 'createShop': result = mockCreateShop(data); break;
           case 'updateShop': result = mockUpdateShop(data.id, data); break;
           case 'deleteShop': result = mockDeleteShop(data.id); break;
           case 'toggleShopStatus': result = mockToggleShopStatus(data.id); break;
+          // Posts
+          case 'listPosts': result = mockListPosts(data); break;
+          case 'getPost': result = mockGetPost(data.id); break;
+          case 'createPost': result = mockCreatePost(data); break;
+          case 'updatePost': result = mockUpdatePost(data.id, data); break;
+          case 'deletePost': result = mockDeletePost(data.id); break;
+          case 'togglePostStatus': result = mockTogglePostStatus(data.id); break;
+          // Categories
           case 'listCategories': result = mockListCategories(); break;
+          case 'createCategory': result = mockCreateCategory(data); break;
+          case 'updateCategory': result = mockUpdateCategory(data.id, data); break;
+          case 'deleteCategory': result = mockDeleteCategory(data.id); break;
+          case 'toggleCategoryStatus': result = mockToggleCategoryStatus(data.id); break;
+          // Users
+          case 'listUsers': result = mockListUsers(data); break;
+          case 'toggleUserStatus': result = mockToggleUserStatus(data.id); break;
+          // Helper
+          case 'activeShops': result = mockActiveShops(); break;
           default: throw new Error('Unknown action: ' + action);
         }
         resolve(result);
@@ -357,4 +513,62 @@ export function toggleShopStatus(id) {
 
 export function listCategories() {
   return callAdmin('listCategories');
+}
+
+export function createCategory(data) {
+  return callAdmin('createCategory', data);
+}
+
+export function updateCategory(id, data) {
+  return callAdmin('updateCategory', { id, ...data });
+}
+
+export function deleteCategory(id) {
+  return callAdmin('deleteCategory', { id });
+}
+
+export function toggleCategoryStatus(id) {
+  return callAdmin('toggleCategoryStatus', { id });
+}
+
+// ---- Posts API ----
+
+export function listPosts(params) {
+  return callAdmin('listPosts', params);
+}
+
+export function getPost(id) {
+  return callAdmin('getPost', { id });
+}
+
+export function createPost(data) {
+  return callAdmin('createPost', data);
+}
+
+export function updatePost(id, data) {
+  return callAdmin('updatePost', { id, ...data });
+}
+
+export function deletePost(id) {
+  return callAdmin('deletePost', { id });
+}
+
+export function togglePostStatus(id) {
+  return callAdmin('togglePostStatus', { id });
+}
+
+// ---- Users API ----
+
+export function listUsers(params) {
+  return callAdmin('listUsers', params);
+}
+
+export function toggleUserStatus(id) {
+  return callAdmin('toggleUserStatus', { id });
+}
+
+// ---- Helper ----
+
+export function activeShops() {
+  return callAdmin('activeShops');
 }
