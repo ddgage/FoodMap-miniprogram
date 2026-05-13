@@ -1,0 +1,34 @@
+# Dependencies
+node_modules/
+miniprogram_npm/
+
+# Build
+dist/
+build/
+
+# IDE / Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment / Secrets
+.env
+.env.*
+*.private.*
+
+# WeChat Mini Program
+project.private.config.json
+
+# Claude / Superpowers
+.claude/
+.superpowers/
+
+# Logs
+*.log
+npm-debug.log*
