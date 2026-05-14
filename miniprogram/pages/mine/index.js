@@ -149,7 +149,7 @@ Page({
       this.onLogin();
       return;
     }
-    wx.showToast({ title: "收藏列表开发中", icon: "none" });
+    wx.navigateTo({ url: "/pages/favorites/index" });
   },
 
   onGoHistory: function () {
@@ -157,7 +157,7 @@ Page({
       this.onLogin();
       return;
     }
-    wx.showToast({ title: "浏览记录开发中", icon: "none" });
+    wx.navigateTo({ url: "/pages/history/index" });
   },
 
   onAbout: function () {

@@ -1,0 +1,43 @@
+<!--pages/history/index.wxml-->
+<view class="page-container">
+  <view class="top-bar" wx:if="{{posts.length > 0}}">
+    <view class="top-count">共 {{posts.length}} 条记录</view>
+    <view class="top-action" bindtap="onClearAll">清空</view>
+  </view>
+
+  <view class="post-list" wx:if="{{posts.length > 0}}">
+    <view class="post-card-wrap" wx:for="{{posts}}" wx:key="_id" data-index="{{index}}"
+          bindtouchstart="onTouchStart" bindtouchmove="onTouchMove" bindtouchend="onTouchEnd">
+      <view class="card-swipe {{swipeIndex === index ? 'swiped' : ''}}">
+        <view class="post-card" bindtap="onPostTap" data-id="{{item._id}}">
+          <image class="card-cover" src="{{item.cover_image || '/images/default-goods-image.png'}}" mode="aspectFill"></image>
+          <view class="card-info">
+            <view class="card-title">{{item.title}}</view>
+            <view class="card-meta">
+              <text wx:if="{{item.author_name}}">{{item.author_name}}</text>
+              <text>{{item.view_count || 0}} 浏览</text>
+            </view>
+          </view>
+        </view>
+        <view class="swipe-btn" bindtap="onSwipeRemove" data-index="{{index}}">
+          <text>删除</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 空状态 -->
+  <view class="empty-state" wx:if="{{posts.length === 0 && !loading}}">
+    <text class="empty-icon">🕐</text>
+    <text>暂无浏览记录</text>
+    <text class="empty-sub">去探店页发现精彩内容吧</text>
+  </view>
+
+  <!-- 加载更多 -->
+  <view class="load-more" wx:if="{{loading}}">
+    <view class="loading-spinner"></view>
+  </view>
+  <view class="load-more" wx:if="{{!hasMore && posts.length > 0}}">
+    <text class="no-more">— 没有更多了 —</text>
+  </view>
+</view>

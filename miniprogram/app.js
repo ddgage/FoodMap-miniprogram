@@ -1,12 +1,13 @@
 App({
   onLaunch: function () {
     this.globalData = {
-      env: "foodmap-0g1s5ukg154a9d65",
+      env: "cloud1-1gzoobj174684ac3",
       userInfo: null,
       isLogin: false,
       city: "杭州市",
       latitude: 30.2741,
-      longitude: 120.1551
+      longitude: 120.1551,
+      categories: null
     };
 
     if (!wx.cloud) {

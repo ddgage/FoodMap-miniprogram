@@ -16,6 +16,7 @@ Page({
     markers: [],
     currentShopId: null,
     scrollIntoView: "",
+    searchKeyword: "",
     loading: false
   },
 
@@ -33,14 +34,23 @@ Page({
 
   loadCategories: function () {
     var that = this;
+    var app = getApp();
+
+    // 优先使用缓存
+    if (app.globalData.categories) {
+      that.setData({ categories: app.globalData.categories });
+      return;
+    }
+
     api.getCategories().then(function (res) {
       var cats = (res.categories || []).map(function (c) {
         return { name: c.name, _id: c._id, icon: c.icon };
       });
       cats.unshift({ name: "全部", _id: "all" });
+      app.globalData.categories = cats;
       that.setData({ categories: cats });
-    }).catch(function () {
-      // 降级使用默认分类
+    }).catch(function (err) {
+      console.error('[map] 加载分类失败，使用降级默认分类:', err);
       var fallback = ["全部", "火锅", "日料", "烧烤", "咖啡", "甜品", "川菜", "粤菜", "西餐", "小吃"];
       var cats = fallback.map(function (name) {
         return { name: name, _id: name };
@@ -65,6 +75,7 @@ Page({
       latitude: latitude,
       longitude: longitude,
       category: currentCategory,
+      keyword: this.data.searchKeyword,
       radius: 3000
     }).then(function (res) {
       var shops = (res.shops || []).map(function (s, i) {
@@ -210,7 +221,38 @@ Page({
   },
 
   onLocateTap: function () {
+    var that = this;
     this.getMapContext().moveToLocation();
+
+    // 获取设备当前坐标，更新城市名和店铺数据
+    wx.getLocation({
+      type: 'gcj02',
+      success: function (locRes) {
+        var lat = locRes.latitude;
+        var lng = locRes.longitude;
+        var app = getApp();
+
+        // 更新坐标到页面和全局
+        app.globalData.latitude = lat;
+        app.globalData.longitude = lng;
+        that.setData({ latitude: lat, longitude: lng });
+
+        // 反查城市名
+        api.reverseGeocode(lat, lng).then(function (geoRes) {
+          var city = (geoRes && geoRes.city) ? geoRes.city : that.data.city;
+          app.globalData.city = city;
+          that.setData({ city: city });
+        }).catch(function () {
+          // 反查失败保留当前城市
+        });
+
+        // 刷新周边店铺
+        that.loadShops();
+      },
+      fail: function () {
+        // getLocation 失败时仅移动地图
+      }
+    });
   },
 
   onRegionChange: function (e) {
@@ -232,8 +274,17 @@ Page({
     wx.navigateTo({ url: "/pages/city-picker/index" });
   },
 
-  onSearchTap: function () {
-    wx.showToast({ title: "搜索功能开发中", icon: "none" });
+  onSearchInput: function (e) {
+    this.setData({ searchKeyword: e.detail.value });
+  },
+
+  onSearchConfirm: function () {
+    this.loadShops();
+  },
+
+  onClearSearch: function () {
+    this.setData({ searchKeyword: "" });
+    this.loadShops();
   },
 
   getMapContext: function () {

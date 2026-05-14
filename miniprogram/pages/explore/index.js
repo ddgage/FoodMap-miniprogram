@@ -14,6 +14,7 @@ Page({
     page: 1,
     pageSize: 20,
     hasMore: true,
+    searchKeyword: "",
     loading: false
   },
 
@@ -24,13 +25,23 @@ Page({
 
   loadCategories: function () {
     var that = this;
+    var app = getApp();
+
+    // 优先使用缓存
+    if (app.globalData.categories) {
+      that.setData({ categories: app.globalData.categories });
+      return;
+    }
+
     api.getCategories().then(function (res) {
       var cats = (res.categories || []).map(function (c) {
         return { name: c.name, _id: c._id, icon: c.icon };
       });
       cats.unshift({ name: "全部", _id: "all" });
+      app.globalData.categories = cats;
       that.setData({ categories: cats });
-    }).catch(function () {
+    }).catch(function (err) {
+      console.error('[explore] 加载分类失败，使用降级默认分类:', err);
       var fallback = ["全部", "火锅", "日料", "烧烤", "咖啡", "甜品", "川菜", "粤菜", "西餐", "小吃"];
       var cats = fallback.map(function (name) {
         return { name: name, _id: name };
@@ -62,7 +73,8 @@ Page({
       page: this.data.page,
       pageSize: this.data.pageSize,
       sort: this.data.currentSort,
-      category: this.data.currentCategory
+      category: this.data.currentCategory,
+      keyword: this.data.searchKeyword
     }).then(function (res) {
       var posts = res.posts || [];
       var newList = that.data.postList.concat(posts);
@@ -126,8 +138,18 @@ Page({
     wx.navigateTo({ url: "/pages/post-detail/index?id=" + id });
   },
 
-  onSearchTap: function () {
-    wx.showToast({ title: "搜索功能开发中", icon: "none" });
+  onSearchInput: function (e) {
+    this.setData({ searchKeyword: e.detail.value });
+  },
+
+  onSearchConfirm: function () {
+    this.setData({ page: 1, postList: [], leftList: [], rightList: [], hasMore: true });
+    this.loadPosts();
+  },
+
+  onClearSearch: function () {
+    this.setData({ searchKeyword: "", page: 1, postList: [], leftList: [], rightList: [], hasMore: true });
+    this.loadPosts();
   },
 
   onShareAppMessage: function () {

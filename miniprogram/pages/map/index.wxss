@@ -59,9 +59,23 @@
   flex-shrink: 0;
 }
 
-.search-placeholder {
+.search-field {
+  flex: 1;
   font-size: 26rpx;
-  color: #999;
+  color: #333;
+}
+
+.search-clear {
+  width: 36rpx;
+  height: 36rpx;
+  border-radius: 50%;
+  background: #ccc;
+  color: #fff;
+  font-size: 22rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
 }
 
 /* 分类筛选栏 */

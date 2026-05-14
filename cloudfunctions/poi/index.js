@@ -11,7 +11,7 @@ const AMAP_KEY = "YOUR_AMAP_KEY";
  * 周边搜索 - 优先查本地数据库，补充高德POI数据
  */
 async function nearbySearch(params) {
-  const { latitude, longitude, category, radius = 3000, page = 1, pageSize = 20 } = params;
+  const { latitude, longitude, category, radius = 3000, page = 1, pageSize = 20, keyword = "" } = params;
 
   let query = db.collection("shops").where({
     status: "active"
@@ -19,6 +19,10 @@ async function nearbySearch(params) {
 
   if (category && category !== "全部") {
     query = query.where({ category });
+  }
+
+  if (keyword) {
+    query = query.where({ name: db.RegExp({ regexp: keyword, options: "i" }) });
   }
 
   const localResult = await query.get();
@@ -106,6 +110,54 @@ async function getShopDetail(params) {
 }
 
 /**
+ * 逆地理编码 — 根据经纬度反查城市名
+ */
+async function reverseGeocode(params) {
+  const { latitude, longitude } = params;
+  if (!latitude || !longitude) {
+    return { city: "", errMsg: "缺少经纬度" };
+  }
+  try {
+    const city = await fetchAmapRegeo(longitude, latitude);
+    return { city };
+  } catch (err) {
+    console.log("逆地理编码失败:", err);
+    return { city: "" };
+  }
+}
+
+function fetchAmapRegeo(lng, lat) {
+  const https = require("https");
+  const path = `/v3/geocode/regeo?key=${AMAP_KEY}&location=${lng},${lat}&extensions=base`;
+
+  return new Promise((resolve, reject) => {
+    https.get({
+      hostname: "restapi.amap.com",
+      path: path,
+      timeout: 5000
+    }, (res) => {
+      let body = "";
+      res.on("data", chunk => body += chunk);
+      res.on("end", () => {
+        try {
+          const data = JSON.parse(body);
+          if (data.status === "1" && data.regeocode && data.regeocode.addressComponent) {
+            // 优先取 city，若为空（直辖市）则取 province
+            const city = data.regeocode.addressComponent.city ||
+                         data.regeocode.addressComponent.province || "";
+            resolve(city);
+          } else {
+            reject(new Error(data.info || "逆地理编码返回异常"));
+          }
+        } catch (e) {
+          reject(e);
+        }
+      });
+    }).on("error", reject);
+  });
+}
+
+/**
  * 获取活跃分类列表
  */
 async function listCategories() {
@@ -126,6 +178,8 @@ exports.main = async (event, context) => {
       return await getShopDetail(event);
     case "listCategories":
       return await listCategories();
+    case "reverseGeocode":
+      return await reverseGeocode(event);
     default:
       return { errCode: 400, errMsg: "Unknown action: " + action };
   }

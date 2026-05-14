@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, Form, Input, Button, Typography, message, Space } from 'antd';
-import { LockOutlined, ShopOutlined } from '@ant-design/icons';
-import { checkAuth } from '../api';
+import { UserOutlined, LockOutlined, ShopOutlined } from '@ant-design/icons';
+import { login } from '../api';
 
 export default function Login() {
   const [loading, setLoading] = useState(false);
@@ -11,14 +11,11 @@ export default function Login() {
   const onFinish = async (values) => {
     setLoading(true);
     try {
-      await checkAuth(values.token);
+      await login(values.username, values.password);
       message.success('登录成功');
       navigate('/dashboard', { replace: true });
-    } catch {
-      // Mock fallback always succeeds with any token
-      // In production, the cloud function validates the token
-      message.success('登录成功（开发模式）');
-      navigate('/dashboard', { replace: true });
+    } catch (e) {
+      message.error(e.message || '登录失败，请检查账号密码');
     }
     setLoading(false);
   };
@@ -40,15 +37,24 @@ export default function Login() {
             </Typography.Title>
             <Typography.Text type="secondary">FoodMap Admin Console</Typography.Text>
           </div>
-          <Form onFinish={onFinish} layout="vertical">
+          <Form onFinish={onFinish} layout="vertical" autoComplete="off">
             <Form.Item
-              name="token"
-              label="管理员Token"
-              rules={[{ required: true, message: '请输入管理员Token' }]}
+              name="username"
+              rules={[{ required: true, message: '请输入账号' }]}
+            >
+              <Input
+                prefix={<UserOutlined />}
+                placeholder="账号"
+                size="large"
+              />
+            </Form.Item>
+            <Form.Item
+              name="password"
+              rules={[{ required: true, message: '请输入密码' }]}
             >
               <Input.Password
                 prefix={<LockOutlined />}
-                placeholder="输入管理员Token以登录"
+                placeholder="密码"
                 size="large"
               />
             </Form.Item>
@@ -58,9 +64,6 @@ export default function Login() {
               </Button>
             </Form.Item>
           </Form>
-          <Typography.Text type="secondary" style={{ fontSize: 12 }}>
-            开发模式下输入任意内容即可登录
-          </Typography.Text>
         </Space>
       </Card>
     </div>

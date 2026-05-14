@@ -40,16 +40,21 @@ export default function PostManage() {
     setLoading(false);
   }, [page, searchKeyword, filterStatus]);
 
-  const fetchMeta = async () => {
+  const loadShopOptions = async () => {
     try {
-      const [cats, s] = await Promise.all([listCategories(), activeShops()]);
-      setCategories(cats || []);
-      setShops(s || []);
-    } catch {}
+      const s = await activeShops();
+      setShops(Array.isArray(s) ? s : []);
+    } catch (err) {
+      console.warn('加载店铺列表失败:', err);
+      setShops([]);
+    }
   };
 
   useEffect(() => { fetchPosts(); }, [fetchPosts]);
-  useEffect(() => { fetchMeta(); }, []);
+  useEffect(() => {
+    listCategories().then(cats => setCategories(cats || [])).catch(() => {});
+    loadShopOptions();
+  }, []);
 
   const handleSearch = () => {
     setPage(1);
@@ -60,6 +65,7 @@ export default function PostManage() {
     setEditingPost(null);
     form.resetFields();
     form.setFieldsValue({ status: 'published', tags: '' });
+    loadShopOptions();
     setModalOpen(true);
   };
 
@@ -75,6 +81,7 @@ export default function PostManage() {
       tags: post.tags ? post.tags.join(',') : '',
       status: post.status
     });
+    loadShopOptions();
     setModalOpen(true);
   };
 

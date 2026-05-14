@@ -121,16 +121,16 @@
 
 /* 标签 */
 .tags-wrap {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 16rpx;
-  padding: 0 32rpx 24rpx;
+  text-align: center;
+  padding: 24rpx 32rpx;
   background: #fff;
   margin-bottom: 16rpx;
 }
 
 .tag-item {
+  display: inline-block;
   padding: 6rpx 20rpx;
+  margin: 8rpx;
   font-size: 24rpx;
   color: #07C160;
   background: #e8f8ee;

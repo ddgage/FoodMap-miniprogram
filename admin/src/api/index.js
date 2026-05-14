@@ -1,9 +1,10 @@
 // Cloud function HTTP endpoint
 // 部署后替换为实际云函数 HTTP 触发器地址
-const CLOUD_FUNCTION_URL = 'https://your-env.ap-shanghai.tcloudbase.com/admin';
+const CLOUD_FUNCTION_URL = 'https://cloud1-1gzoobj174684ac3-1313565480.ap-shanghai.app.tcloudbase.com/admin';
 
 // Admin token
-const ADMIN_TOKEN = 'foodmap-admin-2024-secret';
+const ADMIN_USERNAME = 'admin';
+const ADMIN_PASSWORD = 'Zhangsan@';
 
 const TOKEN_KEY = '_foodmap_admin_token';
 const MOCK_KEY = '_foodmap_mock_data';
@@ -140,11 +141,22 @@ function initMockDB() {
 
 function mockStats() {
   const db = getMockDB();
-  const shopCount = db.shops.filter(s => s.status === 'active').length;
-  const postCount = db.posts.filter(p => p.status === 'published').length;
+  const shopCount = db.shops.length;
+  const shopActiveCount = db.shops.filter(s => s.status === 'active').length;
+  const shopOfflineCount = db.shops.filter(s => s.status === 'offline').length;
+  const postCount = db.posts.length;
+  const postPublishedCount = db.posts.filter(p => p.status === 'published').length;
+  const postOfflineCount = db.posts.filter(p => p.status === 'offline').length;
   const userCount = db.users.length;
+  const userActiveCount = db.users.filter(u => u.status === 'active').length;
+  const userBannedCount = db.users.filter(u => u.status === 'banned').length;
   const todayViews = db.posts.reduce((sum, p) => sum + (p.view_count || 0), 0);
-  return { shopCount, postCount, userCount, todayViews };
+  return {
+    shopCount, shopActiveCount, shopOfflineCount,
+    postCount, postPublishedCount, postOfflineCount,
+    userCount, userActiveCount, userBannedCount,
+    todayViews
+  };
 }
 
 function mockTrend() {
@@ -313,6 +325,10 @@ function mockListCategories() {
 
 function mockCreateCategory(data) {
   const db = getMockDB();
+  const existing = db.categories.find(c => c.name === data.name);
+  if (existing) {
+    throw new Error(`分类"${data.name}"已存在，请勿重复添加`);
+  }
   const cat = {
     _id: 'c' + Date.now(),
     name: data.name,
@@ -381,6 +397,15 @@ function mockActiveShops() {
   return getMockDB().shops.filter(s => s.status === 'active').map(s => ({ _id: s._id, name: s.name }));
 }
 
+function mockCheckShopPosts(shopId) {
+  const db = getMockDB();
+  const relatedPosts = db.posts.filter(p => p.shop_id === shopId);
+  return {
+    count: relatedPosts.length,
+    posts: relatedPosts.map(p => ({ _id: p._id, title: p.title }))
+  };
+}
+
 // ---- Token management ----
 export function setToken(token) {
   localStorage.setItem(TOKEN_KEY, token);
@@ -416,11 +441,11 @@ async function callAdmin(action, data = {}) {
       if (json.code === 0) return json.data;
       throw new Error(json.msg || '请求失败');
     } catch (e) {
-      console.warn('Cloud function call failed, falling back to mock:', e.message);
+      throw new Error('云函数连接失败，数据未保存到云端：' + e.message);
     }
   }
 
-  // Mock fallback
+  // 未配置真实 URL 时使用 mock（开发调试用）
   return mockCall(action, data);
 }
 
@@ -430,7 +455,12 @@ function mockCall(action, data) {
       try {
         let result;
         switch (action) {
-          case 'checkAuth': result = { valid: true }; break;
+          case 'checkAuth':
+            if (data.username !== ADMIN_USERNAME || data.password !== ADMIN_PASSWORD) {
+              throw new Error('账号或密码错误');
+            }
+            result = { valid: true, token: 'session_' + Date.now() };
+            break;
           case 'stats': result = mockStats(); break;
           case 'trend': result = mockTrend(); break;
           case 'hotFavs': result = mockHotFavs(); break;
@@ -459,20 +489,23 @@ function mockCall(action, data) {
           case 'toggleUserStatus': result = mockToggleUserStatus(data.id); break;
           // Helper
           case 'activeShops': result = mockActiveShops(); break;
+          case 'checkShopPosts': result = mockCheckShopPosts(data.id); break;
           default: throw new Error('Unknown action: ' + action);
         }
         resolve(result);
       } catch (e) {
-        resolve({ error: e.message });
+        reject(e);
       }
     }, 200 + Math.random() * 200);
   });
 }
 
 // ---- Exported API ----
-export function checkAuth(token) {
-  setToken(token);
-  return callAdmin('checkAuth');
+export function login(username, password) {
+  return callAdmin('checkAuth', { username, password }).then(res => {
+    setToken(res.token);
+    return res;
+  });
 }
 
 export function getStats() {
@@ -571,4 +604,8 @@ export function toggleUserStatus(id) {
 
 export function activeShops() {
   return callAdmin('activeShops');
+}
+
+export function checkShopPosts(shopId) {
+  return callAdmin('checkShopPosts', { id: shopId });
 }

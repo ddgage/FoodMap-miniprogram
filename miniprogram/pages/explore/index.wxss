@@ -26,9 +26,23 @@
   flex-shrink: 0;
 }
 
-.search-placeholder {
+.search-field {
+  flex: 1;
   font-size: 26rpx;
-  color: #999;
+  color: #333;
+}
+
+.search-clear {
+  width: 36rpx;
+  height: 36rpx;
+  border-radius: 50%;
+  background: #ccc;
+  color: #fff;
+  font-size: 22rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
 }
 
 /* 筛选栏 */
@@ -61,28 +75,6 @@
   height: 4rpx;
   background: #07C160;
   border-radius: 2rpx;
-}
-
-/* 分类滚动 */
-.category-scroll {
-  white-space: nowrap;
-  padding: 8rpx 24rpx 20rpx;
-  background: #fff;
-}
-
-.cate-chip {
-  display: inline-block;
-  padding: 8rpx 24rpx;
-  margin-right: 16rpx;
-  font-size: 24rpx;
-  color: #666;
-  background: #f5f5f5;
-  border-radius: 24rpx;
-}
-
-.cate-chip.active {
-  color: #fff;
-  background: #07C160;
 }
 
 /* 双列瀑布流 */

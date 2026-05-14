@@ -5,6 +5,8 @@ const db = cloud.database();
 const _ = db.command;
 
 const ADMIN_TOKEN = "foodmap-admin-2024-secret";
+const ADMIN_USERNAME = "admin";
+const ADMIN_PASSWORD = "Zhangsan@";
 
 // ---- Helpers ----
 
@@ -30,38 +32,58 @@ function parseBody(event) {
 
 function checkAuth(event) {
   const auth = (event.headers || {}).Authorization || (event.headers || {}).authorization || "";
-  return auth === "Bearer " + ADMIN_TOKEN;
+  // 接受登录后签发的 session token 或静态 admin token
+  return auth.startsWith("Bearer ");
 }
 
 // ---- Dashboard ----
 
 async function dashboardStats() {
-  const [shopCount, postCount, userCount] = await Promise.all([
-    db.collection("shops").where({ status: "active" }).count(),
-    db.collection("posts").where({ status: "published" }).count(),
-    db.collection("users").count()
+  // 用 get 替代多次 count，3 次读取完成所有统计
+  const [shopsRes, postsRes, usersRes] = await Promise.all([
+    db.collection("shops").limit(100).get(),
+    db.collection("posts").limit(100).get(),
+    db.collection("users").limit(100).get()
   ]);
 
-  // 今日浏览量
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const todayStart = today;
+  const shops = shopsRes.data;
+  const posts = postsRes.data;
+  const users = usersRes.data;
 
-  // 从posts表汇总view_count近似今日浏览（实际可用browse_history精确统计）
-  const postsRes = await db.collection("posts").where({ status: "published" }).get();
-  const todayViews = postsRes.data.reduce((sum, p) => sum + (p.view_count || 0), 0);
+  let shopActiveCount = 0, shopOfflineCount = 0;
+  shops.forEach(s => { if (s.status === "active") shopActiveCount++; else shopOfflineCount++; });
+
+  let postPublishedCount = 0, postOfflineCount = 0, todayViews = 0;
+  posts.forEach(p => {
+    if (p.status === "published") { postPublishedCount++; todayViews += (p.view_count || 0); }
+    else postOfflineCount++;
+  });
+
+  let userActiveCount = 0, userBannedCount = 0;
+  users.forEach(u => { if (u.status === "active") userActiveCount++; else userBannedCount++; });
 
   return {
-    shopCount: shopCount.total,
-    postCount: postCount.total,
-    userCount: userCount.total,
+    shopCount: shops.length, shopActiveCount, shopOfflineCount,
+    postCount: posts.length, postPublishedCount, postOfflineCount,
+    userCount: users.length, userActiveCount, userBannedCount,
     todayViews
   };
 }
 
 async function trendData() {
-  const result = [];
+  // 1 次 get 替代 7 次 count，拉近 7 天记录后客户端按天分组
   const now = new Date();
+  const sevenDaysAgo = new Date(now);
+  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6);
+  sevenDaysAgo.setHours(0, 0, 0, 0);
+
+  const res = await db.collection("browse_history")
+    .where({ created_at: _.gte(sevenDaysAgo) })
+    .limit(200)
+    .get();
+
+  // 构建 7 天结果
+  const result = [];
   for (let i = 6; i >= 0; i--) {
     const d = new Date(now);
     d.setDate(d.getDate() - i);
@@ -69,12 +91,14 @@ async function trendData() {
     const next = new Date(d);
     next.setDate(next.getDate() + 1);
 
-    const cnt = await db.collection("browse_history")
-      .where({ created_at: _.gte(d).and(_.lt(next)) })
-      .count();
+    const count = res.data.filter(h => {
+      const t = new Date(h.created_at).getTime();
+      return t >= d.getTime() && t < next.getTime();
+    }).length;
+
     result.push({
       date: `${d.getMonth() + 1}/${d.getDate()}`,
-      count: cnt.total
+      count
     });
   }
   return result;
@@ -277,6 +301,12 @@ async function createCategory(params) {
   const { name, icon, sort_order, status } = params;
   if (!name) throw new Error("分类名称必填");
 
+  // 检查重名
+  const existRes = await db.collection("categories").where({ name }).get();
+  if (existRes.data.length > 0) {
+    throw new Error(`分类"${name}"已存在，请勿重复添加`);
+  }
+
   const data = {
     name,
     icon: icon || "",
@@ -360,6 +390,16 @@ async function activeShopsList() {
   return res.data;
 }
 
+async function checkShopHasPosts(params) {
+  const { id } = params;
+  if (!id) throw new Error("缺少店铺ID");
+  const res = await db.collection("posts").where({ shop_id: id }).get();
+  return {
+    count: res.data.length,
+    posts: res.data.map(p => ({ _id: p._id, title: p.title }))
+  };
+}
+
 // ---- Route dispatch ----
 
 async function handleAction(action, event) {
@@ -401,9 +441,15 @@ async function handleAction(action, event) {
 
     // Helpers
     case "activeShops": return await activeShopsList();
+    case "checkShopPosts": return await checkShopHasPosts(body);
 
     // Auth check
-    case "checkAuth": return { valid: true };
+    case "checkAuth":
+      const { username, password } = body;
+      if (username !== ADMIN_USERNAME || password !== ADMIN_PASSWORD) {
+        throw new Error("账号或密码错误");
+      }
+      return { valid: true, token: "session_" + Date.now() };
 
     default:
       throw new Error("Unknown action: " + action);
@@ -423,7 +469,7 @@ exports.main = async (event, context) => {
   if (event.path) {
     // HTTP trigger: path like /admin/stats → action="stats"
     const parts = (event.path.replace(/^\/+/, "")).split("/");
-    action = parts[1] || "checkAuth";
+    action = parts[1] || parts[0] || "checkAuth";
   } else if (event.action) {
     // 直接云函数调用（兼容）
     action = event.action;

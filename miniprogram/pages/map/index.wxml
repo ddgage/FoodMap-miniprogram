@@ -7,9 +7,12 @@
         <text class="city-text">{{city}}</text>
         <text class="city-arrow">▼</text>
       </view>
-      <view class="search-box" bindtap="onSearchTap">
+      <view class="search-box">
         <image class="search-icon" src="/images/icons/search.svg" mode="aspectFit"></image>
-        <text class="search-placeholder">搜索美食、商圈、地址</text>
+        <input class="search-field" placeholder="搜索美食、商圈、地址"
+               value="{{searchKeyword}}" bindinput="onSearchInput"
+               bindconfirm="onSearchConfirm" confirm-type="search"/>
+        <view class="search-clear" wx:if="{{searchKeyword}}" bindtap="onClearSearch">✕</view>
       </view>
     </view>
   </view>

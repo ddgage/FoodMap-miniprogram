@@ -50,12 +50,15 @@
     <!-- 首字母分组列表 -->
     <scroll-view
       class="city-scroll"
+      style="height: {{scrollViewHeight}}px;"
       scroll-y
       enable-flex
       scroll-into-view="{{scrollToLetter}}"
       scroll-with-animation
       enhanced
       show-scrollbar="{{false}}"
+      upper-threshold="50"
+      lower-threshold="50"
     >
       <view wx:for="{{cityGroups}}" wx:key="letter" id="group-{{item.letter}}">
         <view class="letter-title">{{item.letter}}</view>
@@ -72,7 +75,7 @@
           catchtouchstart="onLetterTouchStart"
           catchtouchmove="onLetterTouchMove"
           catchtouchend="onLetterTouchEnd">
-      <view class="letter-dot {{scrollToLetter === 'group-' + item.letter ? 'active' : ''}}"
+      <view class="letter-dot {{scrollToLetter === 'group-' + item ? 'active' : ''}}"
             wx:for="{{letters}}" wx:key="*this"
             data-letter="{{item}}"
             catchtap="onLetterTap">

@@ -7,7 +7,7 @@ import {
   PlusOutlined, EditOutlined, DeleteOutlined, SearchOutlined,
   ReloadOutlined, EyeOutlined, EyeInvisibleOutlined
 } from '@ant-design/icons';
-import { listShops, createShop, updateShop, deleteShop, toggleShopStatus, listCategories } from '../api';
+import { listShops, createShop, updateShop, deleteShop, toggleShopStatus, listCategories, checkShopPosts } from '../api';
 
 export default function ShopManage() {
   const [shops, setShops] = useState([]);
@@ -25,6 +25,11 @@ export default function ShopManage() {
   const [editingShop, setEditingShop] = useState(null);
   const [form] = Form.useForm();
   const [submitting, setSubmitting] = useState(false);
+
+  // Delete confirmation with association check
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [relatedPosts, setRelatedPosts] = useState([]);
+  const [deleteChecking, setDeleteChecking] = useState(false);
 
   const pageSize = 10;
 
@@ -117,11 +122,38 @@ export default function ShopManage() {
   };
 
   const handleDelete = async (id) => {
+    setDeleteChecking(true);
     try {
-      await deleteShop(id);
+      const result = await checkShopPosts(id);
+      const related = result.posts || [];
+      if (related.length > 0) {
+        setDeleteTarget(id);
+        setRelatedPosts(related);
+      } else {
+        await deleteShop(id);
+        message.success('店铺已删除');
+        fetchShops();
+      }
+    } catch {
+      // 检查失败时直接删除（兜底）
+      try {
+        await deleteShop(id);
+        message.success('店铺已删除');
+        fetchShops();
+      } catch { message.error('删除失败'); }
+    }
+    setDeleteChecking(false);
+  };
+
+  const confirmForceDelete = async () => {
+    if (!deleteTarget) return;
+    try {
+      await deleteShop(deleteTarget);
       message.success('店铺已删除');
       fetchShops();
     } catch { message.error('删除失败'); }
+    setDeleteTarget(null);
+    setRelatedPosts([]);
   };
 
   const handleToggle = async (id) => {
@@ -206,7 +238,7 @@ export default function ShopManage() {
               onChange={v => { setFilterCategory(v || ''); setPage(1); }}
               allowClear
               style={{ width: 130 }}
-              options={categories.map(c => ({ label: c.name, value: c.name }))}
+              options={categories.filter(c => c.status === 'active').map(c => ({ label: c.name, value: c.name }))}
             />
           </Col>
           <Col>
@@ -272,7 +304,7 @@ export default function ShopManage() {
               <Form.Item name="category" label="分类" rules={[{ required: true, message: '请选择分类' }]}>
                 <Select
                   placeholder="选择分类"
-                  options={categories.map(c => ({ label: c.name, value: c.name }))}
+                  options={categories.filter(c => c.status === 'active').map(c => ({ label: c.name, value: c.name }))}
                 />
               </Form.Item>
             </Col>
@@ -326,6 +358,32 @@ export default function ShopManage() {
             <Input.TextArea rows={3} placeholder="图片URL，每行一个" />
           </Form.Item>
         </Form>
+      </Modal>
+
+      {/* 删除关联提示弹窗 */}
+      <Modal
+        title="删除确认 - 存在关联笔记"
+        open={!!deleteTarget && relatedPosts.length > 0}
+        onCancel={() => { setDeleteTarget(null); setRelatedPosts([]); }}
+        onOk={confirmForceDelete}
+        okText="强制删除"
+        okButtonProps={{ danger: true }}
+        cancelText="取消"
+        width={560}
+      >
+        <div style={{ marginBottom: 16 }}>
+          <Typography.Text type="danger" strong>
+            该店铺被以下 {relatedPosts.length} 篇探店笔记关联：
+          </Typography.Text>
+          <ul style={{ marginTop: 12, paddingLeft: 20 }}>
+            {relatedPosts.map(p => (
+              <li key={p._id} style={{ marginBottom: 4 }}>{p.title}</li>
+            ))}
+          </ul>
+        </div>
+        <Typography.Text type="secondary">
+          强制删除后，关联笔记中的店铺信息将失效。建议先修改关联笔记的店铺后再删除。
+        </Typography.Text>
       </Modal>
     </div>
   );

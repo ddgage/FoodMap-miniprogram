@@ -16,6 +16,7 @@ module.exports = {
   nearbySearch: (params) => callFunction("poi", { action: "nearby", ...params }),
   getShopDetail: (params) => callFunction("poi", { action: "detail", ...params }),
   getCategories: () => callFunction("poi", { action: "listCategories" }),
+  reverseGeocode: (latitude, longitude) => callFunction("poi", { action: "reverseGeocode", latitude, longitude }),
 
   // Posts
   getPostList: (params) => callFunction("posts", { action: "list", ...params }),

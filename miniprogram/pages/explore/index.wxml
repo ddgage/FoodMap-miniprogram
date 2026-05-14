@@ -2,9 +2,12 @@
 <view class="page-container">
   <!-- 搜索栏 -->
   <view class="search-bar">
-    <view class="search-input" bindtap="onSearchTap">
+    <view class="search-input">
       <image class="search-icon" src="/images/icons/search.svg" mode="aspectFit"></image>
-      <text class="search-placeholder">搜索探店笔记标题、地点</text>
+      <input class="search-field" placeholder="搜索探店视频"
+             value="{{searchKeyword}}" bindinput="onSearchInput"
+             bindconfirm="onSearchConfirm" confirm-type="search"/>
+      <view class="search-clear" wx:if="{{searchKeyword}}" bindtap="onClearSearch">✕</view>
     </view>
   </view>
 
@@ -20,16 +23,6 @@
       最多浏览
     </view>
   </view>
-
-  <!-- 分类快速筛选 -->
-  <scroll-view class="category-scroll" scroll-x enable-flex show-scrollbar="{{false}}">
-    <view class="cate-chip {{currentCategory === item.name ? 'active' : ''}}"
-          wx:for="{{categories}}" wx:key="_id"
-          data-category="{{item.name}}"
-          bindtap="onCategoryTap">
-      {{item.name}}
-    </view>
-  </scroll-view>
 
   <!-- 双列瀑布流 -->
   <view class="waterfall" wx:if="{{postList.length > 0}}">

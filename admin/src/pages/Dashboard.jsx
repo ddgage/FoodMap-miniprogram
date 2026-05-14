@@ -73,34 +73,64 @@ export default function Dashboard() {
 
       {/* 统计卡片 */}
       <Row gutter={[16, 16]}>
-        <Col xs={12} sm={6}>
+        <Col xs={24} sm={6}>
           <Card hoverable>
-            <Statistic
-              title="店铺总数"
-              value={stats?.shopCount || 0}
-              prefix={<ShopOutlined style={{ color: '#1677ff' }} />}
-            />
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <Statistic
+                title="店铺总数"
+                value={stats?.shopCount || 0}
+                prefix={<ShopOutlined style={{ color: '#1677ff' }} />}
+              />
+              <div style={{ textAlign: 'right', lineHeight: 1.6 }}>
+                <div style={{ fontSize: 13, color: '#52c41a' }}>
+                  上架 <span style={{ fontWeight: 600, fontSize: 18 }}>{stats?.shopActiveCount ?? '-'}</span>
+                </div>
+                <div style={{ fontSize: 13, color: '#999' }}>
+                  下架 <span style={{ fontWeight: 600, fontSize: 18 }}>{stats?.shopOfflineCount ?? '-'}</span>
+                </div>
+              </div>
+            </div>
           </Card>
         </Col>
-        <Col xs={12} sm={6}>
+        <Col xs={24} sm={6}>
           <Card hoverable>
-            <Statistic
-              title="探店笔记数"
-              value={stats?.postCount || 0}
-              prefix={<FileTextOutlined style={{ color: '#52c41a' }} />}
-            />
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <Statistic
+                title="探店笔记数"
+                value={stats?.postCount || 0}
+                prefix={<FileTextOutlined style={{ color: '#52c41a' }} />}
+              />
+              <div style={{ textAlign: 'right', lineHeight: 1.6 }}>
+                <div style={{ fontSize: 13, color: '#52c41a' }}>
+                  上架 <span style={{ fontWeight: 600, fontSize: 18 }}>{stats?.postPublishedCount ?? '-'}</span>
+                </div>
+                <div style={{ fontSize: 13, color: '#999' }}>
+                  下架 <span style={{ fontWeight: 600, fontSize: 18 }}>{stats?.postOfflineCount ?? '-'}</span>
+                </div>
+              </div>
+            </div>
           </Card>
         </Col>
-        <Col xs={12} sm={6}>
+        <Col xs={24} sm={6}>
           <Card hoverable>
-            <Statistic
-              title="用户总数"
-              value={stats?.userCount || 0}
-              prefix={<UserOutlined style={{ color: '#722ed1' }} />}
-            />
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <Statistic
+                title="用户总数"
+                value={stats?.userCount || 0}
+                prefix={<UserOutlined style={{ color: '#722ed1' }} />}
+              />
+              <div style={{ textAlign: 'right', lineHeight: 1.6 }}>
+                <div style={{ fontSize: 13, color: '#52c41a' }}>
+                  正常 <span style={{ fontWeight: 600, fontSize: 18 }}>{stats?.userActiveCount ?? '-'}</span>
+                </div>
+                <div style={{ fontSize: 13, color: '#ff4d4f' }}>
+                  封禁 <span style={{ fontWeight: 600, fontSize: 18 }}>{stats?.userBannedCount ?? '-'}</span>
+                </div>
+              </div>
+            </div>
           </Card>
         </Col>
-        <Col xs={12} sm={6}>
+        <Col xs={24} sm={6}>
           <Card hoverable>
             <Statistic
               title="总浏览量"

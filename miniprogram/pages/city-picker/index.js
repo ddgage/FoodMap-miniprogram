@@ -52,6 +52,7 @@ Page({
     keyword: "",
     searchList: [],
     scrollToLetter: "",
+    scrollViewHeight: 0,
     autoFocus: false
   },
 
@@ -59,12 +60,36 @@ Page({
     var app = getApp();
     this.setData({ currentCity: { name: app.globalData.city, lat: app.globalData.latitude, lng: app.globalData.longitude } });
     this.buildCityData();
+    this.calcScrollHeight();
   },
 
   onReady: function () {
-    // 延迟聚焦，确保页面渲染完毕
     var that = this;
-    setTimeout(function () { that.setData({ autoFocus: true }); }, 300);
+    setTimeout(function () {
+      that.setData({ autoFocus: true });
+      that.calcScrollHeight();
+    }, 300);
+  },
+
+  calcScrollHeight: function () {
+    var that = this;
+    var sysInfo = wx.getSystemInfoSync();
+    var statusBarHeight = sysInfo.statusBarHeight || 20;
+    // navigation bar height is about 44px, search bar ~52px, current city ~64px, hot cities ~60px, section titles ~30px
+    // Use a more accurate measurement
+    var query = wx.createSelectorQuery();
+    query.select('.search-wrap').boundingClientRect();
+    query.select('.current-city').boundingClientRect();
+    query.select('.section').boundingClientRect();
+    query.exec(function (rects) {
+      var searchH = rects[0] ? rects[0].height : 52;
+      var currentH = rects[1] ? rects[1].height : 64;
+      var sectionH = rects[2] ? rects[2].height : 80;
+      var windowH = sysInfo.windowHeight;
+      // Reserve some padding at the bottom
+      var scrollH = windowH - searchH - currentH - sectionH - 20;
+      that.setData({ scrollViewHeight: scrollH > 200 ? scrollH : 400 });
+    });
   },
 
   buildCityData: function () {
@@ -159,11 +184,15 @@ Page({
    */
   onLetterTap: function (e) {
     var letter = e.currentTarget.dataset.letter;
-    this.setData({ scrollToLetter: "group-" + letter });
+    var targetId = "group-" + letter;
+    // 先清空再设置，确保同一字母点击两次也能触发滚动
+    this.setData({ scrollToLetter: "" }, function () {
+      this.setData({ scrollToLetter: targetId });
+    });
   },
 
   onLetterTouchStart: function (e) {
-    this.letterTouchMove(e);
+    this.onLetterTouchMove(e);
   },
 
   onLetterTouchMove: function (e) {
